@@ -1,0 +1,15 @@
+{
+  "name": "retropanel",
+  "appDir": "/opt/retropanel",
+  "dataDir": "/var/lib/retropanel",
+  "databasePath": "/var/lib/retropanel/retropanel.db",
+  "backend": "Go",
+  "frontend": "React + TypeScript",
+  "sidebar": [
+    "Dashboard",
+    "Sales Status",
+    "Admin Leaderboard",
+    "Price & Variable Settings",
+    "Panel & Telegram Bot Settings"
+  ]
+}
