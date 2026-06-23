@@ -1,0 +1,183 @@
+import { useMutation, useQuery } from '@tanstack/react-query'
+
+export type RoleDetails = {
+  name: string
+  is_owner: boolean
+  permissions: Record<string, Record<string, boolean | { scope: number }>>
+}
+
+export type AdminDetails = {
+  id?: string
+  username: string
+  displayName?: string
+  display_name?: string
+  role: RoleDetails
+  status?: 'active' | 'limited' | 'disabled'
+  is_limited?: boolean
+  is_disabled?: boolean
+  used_traffic?: number
+  lifetime_used_traffic?: number
+  total_users?: number
+  data_limit?: number | null
+  permission_overrides?: Record<string, any> | null
+}
+
+export type DashboardSummary = {
+  grossSales: number
+  netRevenue: number
+  openInvoices: number
+  conversionRate: number
+  activeAdmins: number
+  currency: string
+  lastReconciledAt: string
+}
+
+export type SalesPoint = {
+  label: string
+  amount: number
+  orders: number
+}
+
+export type AdminScore = {
+  adminId: string
+  displayName: string
+  closedDeals: number
+  revenue: number
+  collectionPct: number
+}
+
+export type PricingSettings = {
+  currency: string
+  basePlanPrice: number
+  renewalDiscountPct: number
+  taxPct: number
+  commissionPct: number
+  variables: Record<string, string>
+  updatedAt?: string
+}
+
+export type PanelSettings = {
+  panelName: string
+  publicBaseUrl: string
+  telegramBotToken: string
+  telegramAdminChat: string
+  dailyReportEnabled: boolean
+  updatedAt?: string
+}
+
+type LoginPayload = {
+  username: string
+  password: string
+}
+
+const request = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
+  const response = await fetch(url, {
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+    ...options,
+  })
+
+  if (!response.ok) {
+    let message = `Request failed with status ${response.status}`
+    try {
+      const body = await response.json()
+      message = body.error || body.message || message
+    } catch {
+      // keep default message
+    }
+    throw new Error(message)
+  }
+
+  return response.json() as Promise<T>
+}
+
+const normalizeAdmin = (admin: any): AdminDetails => ({
+  id: admin.id,
+  username: admin.username,
+  displayName: admin.displayName || admin.display_name || admin.username,
+  display_name: admin.displayName || admin.display_name || admin.username,
+  status: 'active',
+  is_disabled: false,
+  is_limited: false,
+  used_traffic: 0,
+  lifetime_used_traffic: 0,
+  total_users: 0,
+  data_limit: null,
+  permission_overrides: null,
+  role: {
+    name: admin.role || 'owner',
+    is_owner: true,
+    permissions: {
+      system: { read: true },
+      accounting: { read: true, update: true },
+      settings: { read: true, update: true, read_general: true },
+      admins: { read: true },
+    },
+  },
+})
+
+export const loginAdmin = async (payload: LoginPayload) => {
+  const response = await request<{ admin: any; expiresAt: string }>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+  return {
+    access_token: response.expiresAt,
+    admin: normalizeAdmin(response.admin),
+  }
+}
+
+export const logoutAdmin = async () => {
+  return request<{ ok: boolean }>('/api/auth/logout', { method: 'POST' })
+}
+
+export const getCurrentAdmin = async (): Promise<AdminDetails> => {
+  const response = await request<{ admin: any }>('/api/session')
+  return normalizeAdmin(response.admin)
+}
+
+export const getDashboardSummary = () => request<DashboardSummary>('/api/dashboard')
+export const getSalesStatus = async () => {
+  const response = await request<{ items: SalesPoint[] }>('/api/sales')
+  return response.items
+}
+export const getAdminLeaderboard = async () => {
+  const response = await request<{ items: AdminScore[] }>('/api/admins/leaderboard')
+  return response.items
+}
+export const getPricingSettings = () => request<PricingSettings>('/api/settings/pricing')
+export const savePricingSettings = (payload: PricingSettings) =>
+  request<PricingSettings>('/api/settings/pricing', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+export const getPanelSettings = () => request<PanelSettings>('/api/settings/panel')
+export const savePanelSettings = (payload: PanelSettings) =>
+  request<PanelSettings>('/api/settings/panel', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+
+export const useGetCurrentAdmin = (options?: any) =>
+  useQuery({
+    queryKey: ['current-admin'],
+    queryFn: getCurrentAdmin,
+    ...(options?.query || {}),
+  })
+
+export const useAdminToken = (options?: any) =>
+  useMutation({
+    mutationFn: ({ data }: { data: LoginPayload }) => loginAdmin(data),
+    ...(options?.mutation || {}),
+  })
+
+export const useDashboardSummary = () => useQuery({ queryKey: ['dashboard-summary'], queryFn: getDashboardSummary })
+export const useSalesStatus = () => useQuery({ queryKey: ['sales-status'], queryFn: getSalesStatus })
+export const useAdminLeaderboard = () => useQuery({ queryKey: ['admin-leaderboard'], queryFn: getAdminLeaderboard })
+export const usePricingSettings = () => useQuery({ queryKey: ['pricing-settings'], queryFn: getPricingSettings })
+export const useSavePricingSettings = () => useMutation({ mutationFn: savePricingSettings })
+export const usePanelSettings = () => useQuery({ queryKey: ['panel-settings'], queryFn: getPanelSettings })
+export const useSavePanelSettings = () => useMutation({ mutationFn: savePanelSettings })

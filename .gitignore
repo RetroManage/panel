@@ -1,4 +1,4 @@
-﻿# OS
+# OS
 .DS_Store
 Thumbs.db
 
@@ -17,6 +17,7 @@ yarn-error.log*
 node_modules/
 web/node_modules/
 web/dist/
+web/build/
 web/.vite/
 
 # Go / backend

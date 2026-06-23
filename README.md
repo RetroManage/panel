@@ -1,71 +1,65 @@
 # RetroPanel
 
-RetroPanel is a compact accounting-oriented control panel with a Go backend and a React/TypeScript dashboard.
+RetroPanel is an accounting-oriented control panel with a Go backend and a React/TypeScript frontend based on the PasarGuard dashboard shell.
 
-The project is intentionally arranged for deployment under:
+Default deployment paths:
 
 - Application root: `/opt/retropanel`
 - Data directory: `/var/lib/retropanel`
 - Database file: `/var/lib/retropanel/retropanel.db`
 
-This first version focuses on authentication, a clean dashboard shell, and placeholder accounting pages that can be expanded into real sales, pricing, admin leaderboard, and Telegram bot workflows.
+## Local Development
 
-## Default development login
+### Frontend build
+
+```powershell
+cd web
+npm install
+npm run build
+cd ..
+```
+
+### Backend build
+
+```powershell
+cd backend
+go mod tidy
+go build -o ..\retropanel.exe .\cmd\retropanel
+cd ..
+```
+
+### Run backend and serve frontend
+
+```powershell
+New-Item -ItemType Directory -Force .\data
+
+$env:RETROPANEL_HTTP_ADDR=":8080"
+$env:RETROPANEL_WEB_DIR="$PWD\web\dist"
+$env:RETROPANEL_DB_PATH="$PWD\data\retropanel.db"
+$env:RETROPANEL_ADMIN_USER="admin"
+$env:RETROPANEL_ADMIN_PASSWORD="ChangeMe123!"
+$env:RETROPANEL_SESSION_SECRET="dev-secret-change-later"
+
+.\retropanel.exe
+```
+
+Open:
+
+```text
+http://localhost:8080
+```
+
+Default login:
 
 ```text
 Username: admin
 Password: ChangeMe123!
 ```
 
-Override these before production:
+## Current Sections
 
-```bash
-export RETROPANEL_ADMIN_USER='your-user'
-export RETROPANEL_ADMIN_PASSWORD='your-strong-password'
-export RETROPANEL_SESSION_SECRET='replace-with-a-long-random-secret'
-```
-
-## Backend
-
-```bash
-cd backend
-go run ./cmd/retropanel
-```
-
-The API listens on `:8080` by default and stores application data in `/var/lib/retropanel/retropanel.db` unless overridden by environment variables.
-
-## Frontend
-
-```bash
-cd web
-npm install
-npm run dev
-```
-
-The frontend uses `VITE_API_BASE` for API calls. In development it defaults to `http://localhost:8080`.
-
-## Build
-
-```bash
-cd web
-npm install
-npm run build
-
-cd ../backend
-go build -o ../retropanel ./cmd/retropanel
-```
-
-For production static serving, copy `web/dist` to `/opt/retropanel/web/dist` or set `RETROPANEL_WEB_DIR` to the built frontend directory.
-
-## Environment variables
-
-| Variable | Default | Description |
-|---|---:|---|
-| `RETROPANEL_HTTP_ADDR` | `:8080` | Backend listen address |
-| `RETROPANEL_APP_DIR` | `/opt/retropanel` | Application root |
-| `RETROPANEL_DATA_DIR` | `/var/lib/retropanel` | Persistent data directory |
-| `RETROPANEL_DB_PATH` | `/var/lib/retropanel/retropanel.db` | Database file path |
-| `RETROPANEL_WEB_DIR` | `/opt/retropanel/web/dist` | Built frontend directory |
-| `RETROPANEL_ADMIN_USER` | `admin` | Initial owner username |
-| `RETROPANEL_ADMIN_PASSWORD` | `ChangeMe123!` | Initial owner password |
-| `RETROPANEL_SESSION_SECRET` | generated fallback | HMAC secret for session cookies |
+- Dashboard
+- Sales Status
+- Admin Leaderboard
+- Price & Variable Settings
+- Panel & Telegram Bot Settings

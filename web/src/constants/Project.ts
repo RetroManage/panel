@@ -1,0 +1,5 @@
+export const REPO_URL = 'https://github.com/RetroManage/panel'
+export const ORGANIZATION_URL = 'https://github.com/RetroManage'
+export const DONATION_URL = 'https://github.com/RetroManage/panel'
+export const DISCUSSION_GROUP = 'https://github.com/RetroManage/panel/discussions'
+export const DOCUMENTATION = 'https://github.com/RetroManage/panel#readme'
