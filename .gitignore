@@ -1,10 +1,41 @@
+﻿# OS
 .DS_Store
+Thumbs.db
+
+# Environment
 .env
+.env.*
+!.env.example
+
+# Logs
 *.log
-*.tmp
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node / frontend
 node_modules/
-dist/
-coverage/
+web/node_modules/
+web/dist/
+web/.vite/
+
+# Go / backend
 retropanel
 retropanel.exe
-/var/
+*.exe
+*.test
+*.out
+
+# Local runtime data
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp

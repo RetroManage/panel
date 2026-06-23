@@ -1,13 +1,13 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+﻿import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { api } from './api'
 import type { Admin, AdminScore, DashboardSummary, PanelSettings, PricingSettings, SalesPoint } from './types'
 
 const navItems = [
-  { path: '/', label: 'Dashboard', icon: '◇' },
-  { path: '/sales', label: 'Sales Status', icon: '↗' },
-  { path: '/leaderboard', label: 'Admin Leaderboard', icon: '★' },
-  { path: '/pricing', label: 'Price & Variable Settings', icon: '◌' },
-  { path: '/panel', label: 'Panel & Telegram Bot Settings', icon: '⚙' },
+  { path: '/', label: 'Dashboard', icon: 'â—‡' },
+  { path: '/sales', label: 'Sales Status', icon: 'â†—' },
+  { path: '/leaderboard', label: 'Admin Leaderboard', icon: 'â˜…' },
+  { path: '/pricing', label: 'Price & Variable Settings', icon: 'â—Œ' },
+  { path: '/panel', label: 'Panel & Telegram Bot Settings', icon: 'âš™' },
 ]
 
 function formatMoney(value: number, currency = 'IRR') {
@@ -83,7 +83,7 @@ function LoginScreen({ onLogin }: { onLogin: (admin: Admin) => void }) {
             <input value={password} type="password" onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" />
           </label>
           {error && <div className="error-box">{error}</div>}
-          <button disabled={busy}>{busy ? 'Checking…' : 'Login'}</button>
+          <button disabled={busy}>{busy ? 'Checkingâ€¦' : 'Login'}</button>
         </form>
       </section>
     </main>
@@ -128,7 +128,7 @@ function Shell({ admin, onLogout }: { admin: Admin; onLogout: () => void }) {
             <p className="eyebrow">Live workspace</p>
             <h2>{navItems.find((item) => item.path === route)?.label || 'Dashboard'}</h2>
           </div>
-          <div className="topbar-pill">/opt/retropanel · /var/lib/retropanel</div>
+          <div className="topbar-pill">/opt/retropanel Â· /var/lib/retropanel</div>
         </header>
         {route === '/' && <DashboardPage />}
         {route === '/sales' && <SalesStatusPage />}
@@ -229,8 +229,7 @@ function PricingSettingsPage() {
     setSaved(false)
   }
 
-  async function save() {
-    const next = await api.savePricing(data)
+  async function save() { if (!data) return; const next = await api.savePricing(data)
     setData(next)
     setSaved(true)
   }
@@ -270,8 +269,7 @@ function PanelSettingsPage() {
     setSaved(false)
   }
 
-  async function save() {
-    const next = await api.savePanel(data)
+  async function save() { if (!data) return; const next = await api.savePanel(data)
     setData(next)
     setSaved(true)
   }
@@ -304,3 +302,5 @@ function PageLoading() {
 }
 
 export default App
+
+
