@@ -6,10 +6,10 @@ import { lazyWithChunkRecovery } from '@/utils/chunk-recovery'
 
 const DashboardLayout = lazyWithChunkRecovery(() => import('../pages/_dashboard'))
 const Dashboard = lazyWithChunkRecovery(() => import('../pages/_dashboard._index'))
-const SalesStatus = lazyWithChunkRecovery(() => import('../pages/_dashboard.sales-status'))
-const AdminLeaderboard = lazyWithChunkRecovery(() => import('../pages/_dashboard.admin-leaderboard'))
-const PricingSettings = lazyWithChunkRecovery(() => import('../pages/_dashboard.pricing-settings'))
-const PanelTelegramSettings = lazyWithChunkRecovery(() => import('../pages/_dashboard.panel-telegram-settings'))
+const Users = lazyWithChunkRecovery(() => import('../pages/_dashboard.users'))
+const Statistics = lazyWithChunkRecovery(() => import('../pages/_dashboard.statistics'))
+const Products = lazyWithChunkRecovery(() => import('../pages/_dashboard.products'))
+const Setting = lazyWithChunkRecovery(() => import('../pages/_dashboard.setting'))
 const Login = lazyWithChunkRecovery(() => import('../pages/login'))
 
 const fetchAdminLoader = async () => {
@@ -44,34 +44,34 @@ export const router = createHashRouter([
         ),
       },
       {
-        path: '/sales-status',
+        path: '/users',
         element: (
           <Suspense fallback={<LoadingSpinner />}>
-            <SalesStatus />
+            <Users />
           </Suspense>
         ),
       },
       {
-        path: '/admin-leaderboard',
+        path: '/statistics',
         element: (
           <Suspense fallback={<LoadingSpinner />}>
-            <AdminLeaderboard />
+            <Statistics />
           </Suspense>
         ),
       },
       {
-        path: '/pricing-settings',
+        path: '/products',
         element: (
           <Suspense fallback={<LoadingSpinner />}>
-            <PricingSettings />
+            <Products />
           </Suspense>
         ),
       },
       {
-        path: '/panel-telegram-settings',
+        path: '/setting',
         element: (
           <Suspense fallback={<LoadingSpinner />}>
-            <PanelTelegramSettings />
+            <Setting />
           </Suspense>
         ),
       },

@@ -38,6 +38,21 @@ export type SalesPoint = {
   orders: number
 }
 
+export type BotUser = {
+  id: string
+  username: string
+  telegramId: string
+  planName: string
+  status: 'active' | 'limited' | 'expired' | 'disabled' | string
+  usedTrafficGb: number
+  dataLimitGb: number
+  totalPaid: number
+  discountCodes: number
+  createdByBot: boolean
+  createdAt: string
+  expiresAt: string
+}
+
 export type AdminScore = {
   adminId: string
   displayName: string
@@ -144,6 +159,10 @@ export const getSalesStatus = async () => {
   const response = await request<{ items: SalesPoint[] }>('/api/sales')
   return response.items
 }
+export const getBotUsers = async () => {
+  const response = await request<{ items: BotUser[] }>('/api/bot/users')
+  return response.items.filter(user => user.createdByBot)
+}
 export const getAdminLeaderboard = async () => {
   const response = await request<{ items: AdminScore[] }>('/api/admins/leaderboard')
   return response.items
@@ -176,6 +195,7 @@ export const useAdminToken = (options?: any) =>
 
 export const useDashboardSummary = () => useQuery({ queryKey: ['dashboard-summary'], queryFn: getDashboardSummary })
 export const useSalesStatus = () => useQuery({ queryKey: ['sales-status'], queryFn: getSalesStatus })
+export const useBotUsers = () => useQuery({ queryKey: ['bot-users'], queryFn: getBotUsers })
 export const useAdminLeaderboard = () => useQuery({ queryKey: ['admin-leaderboard'], queryFn: getAdminLeaderboard })
 export const usePricingSettings = () => useQuery({ queryKey: ['pricing-settings'], queryFn: getPricingSettings })
 export const useSavePricingSettings = () => useMutation({ mutationFn: savePricingSettings })

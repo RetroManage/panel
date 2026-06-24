@@ -59,7 +59,7 @@ Password: ChangeMe123!
 ## Current Sections
 
 - Dashboard
-- Sales Status
-- Admin Leaderboard
-- Price & Variable Settings
-- Panel & Telegram Bot Settings
+- Users
+- Statistics
+- Products
+- Setting

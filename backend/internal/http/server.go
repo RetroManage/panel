@@ -42,6 +42,7 @@ func (s *Server) routes() {
 	s.mux.Handle("GET /api/session", s.requireAuth(http.HandlerFunc(s.session)))
 	s.mux.Handle("GET /api/dashboard", s.requireAuth(http.HandlerFunc(s.dashboard)))
 	s.mux.Handle("GET /api/sales", s.requireAuth(http.HandlerFunc(s.sales)))
+	s.mux.Handle("GET /api/bot/users", s.requireAuth(http.HandlerFunc(s.botUsers)))
 	s.mux.Handle("GET /api/admins/leaderboard", s.requireAuth(http.HandlerFunc(s.leaderboard)))
 	s.mux.Handle("GET /api/settings/pricing", s.requireAuth(http.HandlerFunc(s.getPricing)))
 	s.mux.Handle("PUT /api/settings/pricing", s.requireAuth(http.HandlerFunc(s.updatePricing)))

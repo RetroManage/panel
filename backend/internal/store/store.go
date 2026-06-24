@@ -92,6 +92,19 @@ func (s *Store) Sales() []domain.SalesPoint {
 	return append([]domain.SalesPoint(nil), s.data.Sales...)
 }
 
+func (s *Store) BotUsers() []domain.BotUser {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	users := make([]domain.BotUser, 0, len(s.data.BotUsers))
+	for _, user := range s.data.BotUsers {
+		if user.CreatedByBot {
+			users = append(users, user)
+		}
+	}
+	return users
+}
+
 func (s *Store) Leaderboard() []domain.AdminScore {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -188,6 +201,10 @@ func defaultSnapshot() domain.Snapshot {
 			{Label: "Thu", Amount: 22700000, Orders: 11},
 			{Label: "Fri", Amount: 39200000, Orders: 18},
 			{Label: "Sat", Amount: 47100000, Orders: 21},
+		},
+		BotUsers: []domain.BotUser{
+			{ID: "bot-1001", Username: "pg_telegram_1001", TelegramID: "100183024", PlanName: "30D Premium", Status: "active", UsedTrafficGB: 42.6, DataLimitGB: 100, TotalPaid: 3200000, DiscountCodes: 1, CreatedByBot: true, CreatedAt: now.AddDate(0, 0, -18), ExpiresAt: now.AddDate(0, 0, 12)},
+			{ID: "bot-1002", Username: "pg_telegram_1002", TelegramID: "100291776", PlanName: "60D Business", Status: "active", UsedTrafficGB: 78.4, DataLimitGB: 200, TotalPaid: 5900000, DiscountCodes: 0, CreatedByBot: true, CreatedAt: now.AddDate(0, 0, -11), ExpiresAt: now.AddDate(0, 0, 49)},
 		},
 		Leaderboard: []domain.AdminScore{
 			{AdminID: "seed-1", DisplayName: "Nika Moradi", ClosedDeals: 42, Revenue: 68000000, CollectionPct: 96.2},

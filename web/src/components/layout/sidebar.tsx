@@ -4,7 +4,7 @@ import { NavUser } from '@/components/layout/nav-user'
 import { Button } from '@/components/ui/button'
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, useSidebar } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
-import { BarChart3, Bot, ChevronsLeft, ChevronsRight, LayoutDashboardIcon, Settings2, Trophy } from 'lucide-react'
+import { Activity, ChevronsLeft, ChevronsRight, LayoutDashboardIcon, Package, Settings2, ShieldCheck, UsersIcon } from 'lucide-react'
 import * as React from 'react'
 import { Link } from 'react-router'
 import { useAdmin } from '@/hooks/use-admin'
@@ -24,37 +24,37 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: LayoutDashboardIcon,
       },
       {
-        title: 'Sales Status',
-        url: '/sales-status',
-        icon: BarChart3,
+        title: 'Users',
+        url: '/users',
+        icon: UsersIcon,
       },
       {
-        title: 'Admin Leaderboard',
-        url: '/admin-leaderboard',
-        icon: Trophy,
+        title: 'Statistics',
+        url: '/statistics',
+        icon: Activity,
       },
       {
-        title: 'Price & Variable Settings',
-        url: '/pricing-settings',
+        title: 'Products',
+        url: '/products',
+        icon: Package,
+      },
+      {
+        title: 'Setting',
+        url: '/setting',
         icon: Settings2,
-      },
-      {
-        title: 'Panel & Telegram Bot Settings',
-        url: '/panel-telegram-settings',
-        icon: Bot,
       },
     ],
   }
 
   return (
-    <Sidebar collapsible="icon" side="left" className="border-sidebar-border bg-sidebar text-sidebar-foreground border-r" {...props}>
+    <Sidebar collapsible="icon" side="left" className="border-sidebar-border bg-sidebar text-sidebar-foreground border-r shadow-[8px_0_30px_-28px_hsl(var(--primary))]" {...props}>
       {!isMobile && (
         <Button
           variant="ghost"
           size="icon"
           onClick={toggleSidebar}
           className={cn(
-            'bg-sidebar border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground absolute top-3 -right-3 z-50 hidden h-6 w-6 rounded-full border shadow-md transition-all duration-200 lg:flex',
+            'bg-sidebar/95 border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground absolute top-3 -right-3 z-50 hidden h-6 w-6 rounded-full border shadow-md backdrop-blur transition-all duration-200 lg:flex',
             state === 'collapsed' && '-right-3',
           )}
         >
@@ -67,12 +67,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link to="/" className="flex items-center gap-2">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <LayoutDashboardIcon className="size-4" />
+                <div className="from-sidebar-primary to-primary text-sidebar-primary-foreground flex aspect-square size-9 items-center justify-center rounded-xl bg-gradient-to-br shadow-lg shadow-primary/20 ring-1 ring-primary/25">
+                  <ShieldCheck className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">RetroPanel</span>
-                  <span className="truncate text-xs">Accounting Control Center</span>
+                  <span className="truncate font-semibold tracking-tight">RetroPanel</span>
+                  <span className="text-muted-foreground truncate text-xs">PasarGuard Bot Control</span>
                 </div>
               </Link>
             </SidebarMenuButton>

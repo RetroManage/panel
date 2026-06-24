@@ -28,6 +28,23 @@ type SalesPoint struct {
 	Orders int    `json:"orders"`
 }
 
+// BotUser is intentionally scoped to accounts created by the Telegram sales bot.
+// The panel should never mix manually-created PasarGuard users into this list.
+type BotUser struct {
+	ID            string    `json:"id"`
+	Username      string    `json:"username"`
+	TelegramID    string    `json:"telegramId"`
+	PlanName      string    `json:"planName"`
+	Status        string    `json:"status"`
+	UsedTrafficGB float64   `json:"usedTrafficGb"`
+	DataLimitGB   float64   `json:"dataLimitGb"`
+	TotalPaid     int64     `json:"totalPaid"`
+	DiscountCodes int       `json:"discountCodes"`
+	CreatedByBot  bool      `json:"createdByBot"`
+	CreatedAt     time.Time `json:"createdAt"`
+	ExpiresAt     time.Time `json:"expiresAt"`
+}
+
 type AdminScore struct {
 	AdminID       string  `json:"adminId"`
 	DisplayName   string  `json:"displayName"`
@@ -59,6 +76,7 @@ type Snapshot struct {
 	Admins      []Admin          `json:"admins"`
 	Dashboard   DashboardSummary `json:"dashboard"`
 	Sales       []SalesPoint     `json:"sales"`
+	BotUsers    []BotUser        `json:"botUsers"`
 	Leaderboard []AdminScore     `json:"leaderboard"`
 	Pricing     PricingSettings  `json:"pricing"`
 	Panel       PanelSettings    `json:"panel"`
