@@ -25,15 +25,15 @@ export default function StatisticsPage() {
   return (
     <div className="flex w-full flex-col items-start gap-2">
       <div className="animate-fade-in w-full transform-gpu" style={{ animationDuration: '400ms' }}>
-        <PageHeader title="Statistics" description="Panel connectivity, bot-user consumption, and sales movement for the PasarGuard stack." tutorialUrl="https://github.com/PasarGuard/panel#readme" />
+        <PageHeader title="Statistics" description="Panel connectivity, user consumption, and sales movement for the PasarGuard stack." tutorialUrl="https://github.com/PasarGuard/panel#readme" />
         <Separator />
       </div>
 
       <div className="w-full px-3 pt-4 sm:px-4">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard title="Panel Connection" value="Online" helper="Local API session is authenticated" icon={Wifi} />
-          <MetricCard title="Bot Users Online" value={formatNumber(activeUsers)} helper={`${formatNumber(users.length)} bot-created users tracked`} icon={RadioTower} />
-          <MetricCard title="Traffic Used" value={`${totalTraffic.toFixed(1)} GB`} helper="Consumption from bot-created users" icon={Activity} />
+          <MetricCard title="Users Online" value={formatNumber(activeUsers)} helper={`${formatNumber(users.length)} users tracked`} icon={RadioTower} />
+          <MetricCard title="Traffic Used" value={`${totalTraffic.toFixed(1)} GB`} helper="Consumption from users" icon={Activity} />
           <MetricCard title="Sales Movement" value={`${salesDelta >= 0 ? '+' : ''}${salesDelta.toFixed(1)}%`} helper="First-to-last visible sales delta" icon={TrendingUp} />
         </div>
 

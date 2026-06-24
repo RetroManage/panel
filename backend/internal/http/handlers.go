@@ -82,6 +82,24 @@ func (s *Server) updatePricing(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, s.store.Pricing())
 }
 
+func (s *Server) getGeneral(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, s.store.General())
+}
+
+func (s *Server) updateGeneral(w http.ResponseWriter, r *http.Request) {
+	var input domain.GeneralSettingsUpdate
+	if err := decodeJSON(r, &input); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid general settings payload")
+		return
+	}
+	settings, err := s.store.SaveGeneral(input)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not save general settings")
+		return
+	}
+	writeJSON(w, http.StatusOK, settings)
+}
+
 func (s *Server) getPanel(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, s.store.Panel())
 }

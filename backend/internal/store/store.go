@@ -133,6 +133,62 @@ func (s *Store) SavePricing(next domain.PricingSettings) error {
 	return s.flushLocked()
 }
 
+func (s *Store) General() domain.GeneralSettings {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	username := "admin"
+	if len(s.data.Admins) > 0 {
+		username = s.data.Admins[0].Username
+	}
+	return domain.GeneralSettings{
+		PanelName:     s.data.Panel.PanelName,
+		PublicBaseURL: s.data.Panel.PublicBaseURL,
+		AdminUsername: username,
+		UpdatedAt:     s.data.UpdatedAt,
+	}
+}
+
+func (s *Store) SaveGeneral(next domain.GeneralSettingsUpdate) (domain.GeneralSettings, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if next.PanelName != "" {
+		s.data.Panel.PanelName = next.PanelName
+	}
+	s.data.Panel.PublicBaseURL = next.PublicBaseURL
+	if len(s.data.Admins) == 0 {
+		admin, err := newAdmin("admin", "Owner", "owner", "ChangeMe123!")
+		if err != nil {
+			return domain.GeneralSettings{}, err
+		}
+		s.data.Admins = append(s.data.Admins, admin)
+	}
+	if next.AdminUsername != "" {
+		s.data.Admins[0].Username = next.AdminUsername
+	}
+	if next.AdminPassword != "" {
+		salt, err := randomBytes(16)
+		if err != nil {
+			return domain.GeneralSettings{}, err
+		}
+		s.data.Admins[0].PasswordSalt = base64.RawStdEncoding.EncodeToString(salt)
+		s.data.Admins[0].PasswordHash = hashPassword(next.AdminPassword, salt)
+	}
+	now := time.Now().UTC()
+	s.data.Panel.UpdatedAt = now
+	s.data.UpdatedAt = now
+	if err := s.flushLocked(); err != nil {
+		return domain.GeneralSettings{}, err
+	}
+	return domain.GeneralSettings{
+		PanelName:     s.data.Panel.PanelName,
+		PublicBaseURL: s.data.Panel.PublicBaseURL,
+		AdminUsername: s.data.Admins[0].Username,
+		UpdatedAt:     s.data.UpdatedAt,
+	}, nil
+}
+
 func (s *Store) Panel() domain.PanelSettings {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -143,6 +199,12 @@ func (s *Store) SavePanel(next domain.PanelSettings) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if next.PanelName == "" {
+		next.PanelName = s.data.Panel.PanelName
+	}
+	if next.TelegramOwnerID == "" {
+		next.TelegramOwnerID = next.TelegramAdminChat
+	}
 	next.UpdatedAt = time.Now().UTC()
 	s.data.Panel = next
 	s.data.UpdatedAt = next.UpdatedAt
@@ -229,7 +291,12 @@ func defaultSnapshot() domain.Snapshot {
 			PublicBaseURL:      "https://panel.example.com",
 			TelegramBotToken:   "",
 			TelegramAdminChat:  "",
+			TelegramOwnerID:    "",
 			DailyReportEnabled: true,
+			BotEnabled:         false,
+			BotTexts:           "welcome=Welcome to PasarGuard\nplans=Choose your product\nprofile=Your account status\nsupport=Contact support",
+			BotButtons:         "Buy service | Renew service | Profile\nPlans | Support | Tutorials",
+			BotButtonStatus:    "buy=true\nrenew=true\nprofile=true\nsupport=true\ntutorial=false",
 			UpdatedAt:          now,
 		},
 		UpdatedAt: now,

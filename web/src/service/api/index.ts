@@ -76,8 +76,27 @@ export type PanelSettings = {
   publicBaseUrl: string
   telegramBotToken: string
   telegramAdminChat: string
+  telegramOwnerId?: string
   dailyReportEnabled: boolean
+  botEnabled?: boolean
+  botTexts?: string
+  botButtons?: string
+  botButtonStatus?: string
   updatedAt?: string
+}
+
+export type GeneralSettings = {
+  panelName: string
+  publicBaseUrl: string
+  adminUsername: string
+  updatedAt?: string
+}
+
+export type GeneralSettingsPayload = {
+  panelName: string
+  publicBaseUrl: string
+  adminUsername: string
+  adminPassword?: string
 }
 
 type LoginPayload = {
@@ -173,6 +192,13 @@ export const savePricingSettings = (payload: PricingSettings) =>
     method: 'PUT',
     body: JSON.stringify(payload),
   })
+
+export const getGeneralSettings = () => request<GeneralSettings>('/api/settings/general')
+export const saveGeneralSettings = (payload: GeneralSettingsPayload) =>
+  request<GeneralSettings>('/api/settings/general', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
 export const getPanelSettings = () => request<PanelSettings>('/api/settings/panel')
 export const savePanelSettings = (payload: PanelSettings) =>
   request<PanelSettings>('/api/settings/panel', {
@@ -199,5 +225,7 @@ export const useBotUsers = () => useQuery({ queryKey: ['bot-users'], queryFn: ge
 export const useAdminLeaderboard = () => useQuery({ queryKey: ['admin-leaderboard'], queryFn: getAdminLeaderboard })
 export const usePricingSettings = () => useQuery({ queryKey: ['pricing-settings'], queryFn: getPricingSettings })
 export const useSavePricingSettings = () => useMutation({ mutationFn: savePricingSettings })
+export const useGeneralSettings = () => useQuery({ queryKey: ['general-settings'], queryFn: getGeneralSettings })
+export const useSaveGeneralSettings = () => useMutation({ mutationFn: saveGeneralSettings })
 export const usePanelSettings = () => useQuery({ queryKey: ['panel-settings'], queryFn: getPanelSettings })
 export const useSavePanelSettings = () => useMutation({ mutationFn: savePanelSettings })

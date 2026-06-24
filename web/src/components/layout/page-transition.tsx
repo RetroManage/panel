@@ -40,7 +40,11 @@ const getMotion = () => {
   return motionCache
 }
 
-const isTab = (a: string, b: string) => (a.startsWith('/settings') && b.startsWith('/settings')) || (a.startsWith('/nodes') && b.startsWith('/nodes'))
+const isTab = (a: string, b: string) =>
+  (a.startsWith('/settings') && b.startsWith('/settings')) ||
+  (a.startsWith('/setting') && b.startsWith('/setting')) ||
+  (a.startsWith('/bot-setting') && b.startsWith('/bot-setting')) ||
+  (a.startsWith('/nodes') && b.startsWith('/nodes'))
 
 export default memo(function PageTransition({ children, duration = 300, delay = 0, isContentTransition = false, className }: PageTransitionProps) {
   const location = useLocation()
@@ -104,7 +108,7 @@ export default memo(function PageTransition({ children, duration = 300, delay = 
       return
     }
 
-    const ms = isContentTransition && mobile ? 200 : mobile ? 150 : 120
+    const ms = isContentTransition && mobile ? 240 : mobile ? 180 : 170
 
     if (same) {
       setIsShaking(true)
@@ -140,7 +144,7 @@ export default memo(function PageTransition({ children, duration = 300, delay = 
   }, [children, opacity, isShaking])
 
   const noMotion = getMotion()
-  const ms = isContentTransition && getMobile() ? 200 : getMobile() ? 150 : 120
+  const ms = isContentTransition && getMobile() ? 240 : getMobile() ? 180 : 170
 
   return (
     <div
@@ -154,7 +158,7 @@ export default memo(function PageTransition({ children, duration = 300, delay = 
             ...(delay > 0 && { animationDelay: `${delay}ms` }),
             animationFillMode: 'both',
           }),
-        ...(!noMotion && { transition: `opacity ${ms}ms cubic-bezier(0.4, 0, 0.2, 1)` }),
+        ...(!noMotion && { transition: `opacity ${ms}ms cubic-bezier(0.22, 1, 0.36, 1), filter ${ms}ms cubic-bezier(0.22, 1, 0.36, 1)` }),
       }}
     >
       {displayChildren}

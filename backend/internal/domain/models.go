@@ -68,8 +68,27 @@ type PanelSettings struct {
 	PublicBaseURL      string    `json:"publicBaseUrl"`
 	TelegramBotToken   string    `json:"telegramBotToken"`
 	TelegramAdminChat  string    `json:"telegramAdminChat"`
+	TelegramOwnerID    string    `json:"telegramOwnerId"`
 	DailyReportEnabled bool      `json:"dailyReportEnabled"`
+	BotEnabled         bool      `json:"botEnabled"`
+	BotTexts           string    `json:"botTexts"`
+	BotButtons         string    `json:"botButtons"`
+	BotButtonStatus    string    `json:"botButtonStatus"`
 	UpdatedAt          time.Time `json:"updatedAt"`
+}
+
+type GeneralSettings struct {
+	PanelName     string    `json:"panelName"`
+	PublicBaseURL string    `json:"publicBaseUrl"`
+	AdminUsername string    `json:"adminUsername"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+}
+
+type GeneralSettingsUpdate struct {
+	PanelName     string `json:"panelName"`
+	PublicBaseURL string `json:"publicBaseUrl"`
+	AdminUsername string `json:"adminUsername"`
+	AdminPassword string `json:"adminPassword"`
 }
 
 type Snapshot struct {

@@ -1,12 +1,10 @@
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import useDirDetection from '@/hooks/use-dir-detection'
-import { getDocsUrl } from '@/utils/docs-url'
 import Snowfall from '@/components/common/snowfall'
 import { cn } from '@/lib/utils'
-import { HelpCircle, LucideIcon, Plus } from 'lucide-react'
+import { LucideIcon, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router'
 
 interface PageHeaderProps {
   title: string
@@ -19,40 +17,19 @@ interface PageHeaderProps {
   className?: string
 }
 
-export default function PageHeader({ title, description, buttonText, onButtonClick, buttonIcon: Icon = Plus, buttonTooltip, tutorialUrl, className }: PageHeaderProps) {
+export default function PageHeader({ title, description, buttonText, onButtonClick, buttonIcon: Icon = Plus, buttonTooltip, className }: PageHeaderProps) {
   const { t } = useTranslation()
   const dir = useDirDetection()
-  const location = useLocation()
-
-  // Generate tutorial URL if not provided
-  const docsUrl = tutorialUrl || getDocsUrl(location.pathname)
 
   return (
     <div dir={dir} className={cn('relative mx-auto flex w-full flex-row items-start justify-between gap-4 overflow-hidden px-4 py-4 md:pt-6', className)}>
       <Snowfall className="snowfall--header" />
+      <div className="from-primary/10 via-primary/5 pointer-events-none absolute inset-x-4 top-3 h-20 rounded-3xl bg-gradient-to-r to-transparent blur-2xl" />
       <div className="relative z-10 flex min-w-0 flex-1 flex-col gap-y-1">
         <div className="flex min-w-0 items-center gap-2.5">
-          <h1 className="truncate text-lg font-medium sm:text-xl">{t(title)}</h1>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a
-                  href={docsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:ring-ring inline-flex h-7 w-7 items-center justify-center rounded-md border-0 transition-colors hover:border-2 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                  aria-label={t('tutorial', { defaultValue: 'View tutorial' })}
-                >
-                  <HelpCircle className="h-4 w-4" />
-                </a>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{t('tutorial', { defaultValue: 'View tutorial' })}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <h1 className="truncate text-lg font-semibold tracking-tight sm:text-xl">{t(title)}</h1>
         </div>
-        {description && <span className="text-muted-foreground text-xs whitespace-normal sm:text-sm">{t(description)}</span>}
+        {description && <span className="text-muted-foreground max-w-3xl text-xs leading-relaxed whitespace-normal sm:text-sm">{t(description)}</span>}
       </div>
       {buttonText && onButtonClick && (
         <div className="relative z-10 shrink-0">
@@ -60,7 +37,7 @@ export default function PageHeader({ title, description, buttonText, onButtonCli
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button className="flex items-center" onClick={onButtonClick} size="sm">
+                  <Button className="flex items-center shadow-sm shadow-primary/15" onClick={onButtonClick} size="sm">
                     {Icon && <Icon />}
                     <span>{t(buttonText)}</span>
                   </Button>
@@ -71,7 +48,7 @@ export default function PageHeader({ title, description, buttonText, onButtonCli
               </Tooltip>
             </TooltipProvider>
           ) : (
-            <Button className="flex items-center" onClick={onButtonClick} size="sm">
+            <Button className="flex items-center shadow-sm shadow-primary/15" onClick={onButtonClick} size="sm">
               {Icon && <Icon />}
               <span>{t(buttonText)}</span>
             </Button>

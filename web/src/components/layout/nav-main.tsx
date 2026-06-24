@@ -40,7 +40,7 @@ export function NavMain({
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>PasarGuard</SidebarGroupLabel>
+      <SidebarGroupLabel>Navigation</SidebarGroupLabel>
       <SidebarMenu>
         {items.map(item => (
           <Collapsible key={item.title} defaultOpen={item.isActive || location.pathname.startsWith(item.url)}>
@@ -48,7 +48,7 @@ export function NavMain({
               <CollapsibleTrigger asChild>
                 <NavLink to={item.url} onClick={handleNavigation} end={item.url === '/'}>
                   {({ isActive }) => (
-                    <SidebarMenuButton tooltip={item.title} isActive={isActive}>
+                    <SidebarMenuButton tooltip={item.title} isActive={isActive} className="transition-all duration-300 hover:translate-x-0.5 hover:bg-sidebar-accent/80 data-[active=true]:bg-primary/10 data-[active=true]:text-primary">
                       <item.icon />
                       <span>{item.title}</span>
                     </SidebarMenuButton>
@@ -70,7 +70,7 @@ export function NavMain({
                         const subActive = location.pathname === subItem.url || (subItem.matchPrefix && (location.pathname === base || location.pathname.startsWith(`${base}/`)))
                         return (
                           <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton asChild className="flex h-8 items-center gap-2" isActive={subActive}>
+                            <SidebarMenuSubButton asChild className="flex h-8 items-center gap-2 transition-all duration-300 hover:translate-x-0.5 data-[active=true]:text-primary" isActive={subActive}>
                               <NavLink to={subItem.url} end={!subItem.matchPrefix} onClick={handleNavigation}>
                                 <subItem.icon />
                                 <span>{subItem.title}</span>

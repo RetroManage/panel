@@ -1,259 +1,127 @@
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { SubscriptionFormActions } from '@/features/subscriptions/components/subscription-form-actions'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
-import { DEFAULT_SHADOWSOCKS_METHOD } from '@/constants/Proxies'
-import { ShadowsocksMethods, useGetGeneralSettings, useReconnectAllNode } from '@/service/api'
-import { queryClient } from '@/utils/query-client'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, RefreshCcw } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { useTranslation } from 'react-i18next'
+import { useAdmin } from '@/hooks/use-admin'
+import { useGeneralSettings, useSaveGeneralSettings } from '@/service/api'
+import { useQueryClient } from '@tanstack/react-query'
+import { KeyRound, Link2, Loader2, Save, ShieldCheck, UserCog } from 'lucide-react'
+import { FormEvent, useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { z } from 'zod'
-import { useSettingsContext } from './_dashboard.settings'
 
-// general settings validation schema
-const generalSettingsSchema = z.object({
-  default_method: z.string().default(''),
-})
+export default function GeneralSettings() {
+  const { admin } = useAdmin()
+  const queryClient = useQueryClient()
+  const { data, isLoading } = useGeneralSettings()
+  const saveGeneral = useSaveGeneralSettings()
+  const [panelName, setPanelName] = useState('RetroPanel')
+  const [publicBaseUrl, setPublicBaseUrl] = useState('')
+  const [username, setUsername] = useState(admin?.username || 'admin')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
-type GeneralSettingsFormInput = z.input<typeof generalSettingsSchema>
+  useEffect(() => {
+    if (!data) return
+    setPanelName(data.panelName || 'RetroPanel')
+    setPublicBaseUrl(data.publicBaseUrl || '')
+    setUsername(data.adminUsername || admin?.username || 'admin')
+  }, [admin?.username, data])
 
-export default function General() {
-  const { t } = useTranslation()
-  const { isLoading, error, updateSettings, isSaving } = useSettingsContext()
-  const { data: generalSettings, isLoading: isGeneralLoading, error: generalError } = useGetGeneralSettings()
-  const [isReconnectAllDialogOpen, setIsReconnectAllDialogOpen] = useState(false)
-  const reconnectAllNodeMutation = useReconnectAllNode()
-
-  const generalFormValues = useMemo<GeneralSettingsFormInput>(
-    () =>
-      generalSettings
-        ? {
-            default_method: generalSettings.default_method || DEFAULT_SHADOWSOCKS_METHOD,
-          }
-        : {
-            default_method: '',
-          },
-    [generalSettings?.default_method],
-  )
-
-  const form = useForm<GeneralSettingsFormInput>({
-    resolver: zodResolver(generalSettingsSchema),
-    values: generalFormValues,
-  })
-
-  const onSubmit = async (data: GeneralSettingsFormInput) => {
-    try {
-      // Filter out empty values and prepare the payload
-      const filteredData: any = {
-        general: {
-          ...data,
-          default_method: data.default_method || DEFAULT_SHADOWSOCKS_METHOD,
-        },
-      }
-
-      await updateSettings(filteredData)
-    } catch (error) {
-      // Error handling is done in the parent context
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (password && password !== confirmPassword) {
+      toast.error('Passwords do not match')
+      return
     }
-  }
-
-  const handleCancel = () => {
-    if (!generalSettings) return
-    form.reset({
-      default_method: generalSettings.default_method || DEFAULT_SHADOWSOCKS_METHOD,
+    await saveGeneral.mutateAsync({
+      panelName,
+      publicBaseUrl,
+      adminUsername: username,
+      adminPassword: password || undefined,
     })
-    toast.success(t('settings.general.cancelSuccess'))
-  }
-
-  const handleReconnectAll = async () => {
-    try {
-      await reconnectAllNodeMutation.mutateAsync({
-        params: {},
-      })
-
-      toast.success(t('success', { defaultValue: 'Success' }), {
-        description: t('nodes.reconnectAllSuccess', {
-          defaultValue: 'All nodes have been reconnected successfully',
-        }),
-      })
-
-      // Invalidate nodes queries to refresh data
-      queryClient.invalidateQueries({
-        queryKey: ['/api/nodes'],
-      })
-      queryClient.invalidateQueries({
-        queryKey: ['/api/nodes/simple'],
-      })
-
-      setIsReconnectAllDialogOpen(false)
-    } catch (error) {
-      toast.error(t('error', { defaultValue: 'Error' }), {
-        description: t('nodes.reconnectAllFailed', {
-          defaultValue: 'Failed to reconnect all nodes',
-        }),
-      })
-    }
-  }
-
-  const loadError = error || generalError
-
-  // TODO: skeleton needs to be improved
-  if (isLoading || isGeneralLoading) {
-    return (
-      <div className="w-full p-4 sm:py-6 lg:py-8">
-        <div className="space-y-6 sm:space-y-8 lg:space-y-10">
-          {/* General Settings Skeleton */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-4 w-96" />
-            </div>
-            <Skeleton className="h-16" />
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-10" />
-                  <Skeleton className="h-3 w-64" />
-                </div>
-              ))}
-            </div>
-            <Skeleton className="h-16" />
-          </div>
-
-          {/* Action Buttons Skeleton */}
-          <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:gap-4">
-            <div className="flex-1"></div>
-            <div className="flex flex-col gap-3 sm:shrink-0 sm:flex-row sm:gap-4">
-              <Skeleton className="h-10 w-24" />
-              <Skeleton className="h-10 w-20" />
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (loadError) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center p-4 sm:py-6 lg:py-8">
-        <div className="space-y-3 text-center">
-          <div className="text-lg text-red-500">⚠️</div>
-          <p className="text-sm text-red-500">Error loading settings</p>
-        </div>
-      </div>
-    )
+    setPassword('')
+    setConfirmPassword('')
+    queryClient.invalidateQueries({ queryKey: ['current-admin'] })
+    queryClient.invalidateQueries({ queryKey: ['general-settings'] })
+    toast.success('General settings saved')
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-200px)] w-full flex-col">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-1 flex-col p-4 sm:py-6 lg:py-8">
-          <div className="mb-4 sm:mb-6 lg:mb-8">
-            {/* General Settings */}
-            <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="default_method"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="flex items-center gap-2 text-xs font-medium sm:text-sm">{t('settings.general.defaultMethod.title')}</FormLabel>
-                    <FormControl>
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger className="text-xs sm:text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.values(ShadowsocksMethods)
-                            .filter(Boolean)
-                            .map(flow => {
-                              return (
-                                <SelectItem value={flow} key={flow} className="text-xs sm:text-sm">
-                                  {flow}
-                                </SelectItem>
-                              )
-                            })}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormDescription className="text-muted-foreground text-xs sm:text-sm">{t('settings.general.defaultMethod.description')}</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    <div className="w-full space-y-4 px-4 py-5 pb-12">
+      <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card className="border-primary/10 bg-card/90 shadow-sm shadow-primary/5 backdrop-blur">
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <CardTitle className="flex items-center gap-2"><ShieldCheck className="text-primary size-5" /> General</CardTitle>
+                <CardDescription>Core panel settings and owner login credentials.</CardDescription>
+              </div>
+              <Badge variant="green">Secure</Badge>
             </div>
-          </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={onSubmit} className="space-y-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="panelName" className="flex items-center gap-2"><ShieldCheck className="size-4 text-primary" /> Panel name</Label>
+                  <Input id="panelName" value={panelName} onChange={event => setPanelName(event.target.value)} disabled={isLoading || saveGeneral.isPending} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="publicBaseUrl" className="flex items-center gap-2"><Link2 className="size-4 text-primary" /> Public base URL</Label>
+                  <Input id="publicBaseUrl" value={publicBaseUrl} onChange={event => setPublicBaseUrl(event.target.value)} placeholder="https://panel.example.com" disabled={isLoading || saveGeneral.isPending} />
+                </div>
+              </div>
 
-          <Separator className="my-3" />
+              <Separator />
 
-          {/* Reconnect All Nodes Section */}
-          <div className="flex flex-col gap-3 py-3 sm:gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="space-y-1">
-              <h3 className="text-base font-semibold sm:text-lg">{t('nodes.title', { defaultValue: 'Reconnect All Nodes' })}</h3>
-              <p className="text-muted-foreground text-xs sm:text-sm">{t('nodes.reconnectinfo', { defaultValue: 'Refresh all nodes connections' })}</p>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="flex items-center gap-2"><UserCog className="size-4 text-primary" /> Username</Label>
+                  <Input id="username" value={username} onChange={event => setUsername(event.target.value)} disabled={isLoading || saveGeneral.isPending} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="flex items-center gap-2"><KeyRound className="size-4 text-primary" /> New password</Label>
+                  <Input id="password" type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder="Leave empty to keep current" disabled={isLoading || saveGeneral.isPending} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm password</Label>
+                  <Input id="confirmPassword" type="password" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} placeholder="Repeat new password" disabled={isLoading || saveGeneral.isPending} />
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button type="submit" disabled={isLoading || saveGeneral.isPending}>
+                  {saveGeneral.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                  Save changes
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden border-primary/10 bg-card/90 shadow-sm shadow-primary/5 backdrop-blur">
+          <CardHeader>
+            <CardTitle>Access Snapshot</CardTitle>
+            <CardDescription>Current runtime identity for this control panel.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="rounded-xl border bg-muted/30 p-4">
+              <p className="text-muted-foreground text-xs">Current admin</p>
+              <p className="mt-1 text-lg font-semibold">{admin?.username || username}</p>
             </div>
-            <Button
-              variant="destructive"
-              size="sm"
-              type="button"
-              onClick={() => setIsReconnectAllDialogOpen(true)}
-              disabled={reconnectAllNodeMutation.isPending}
-              className="w-full shrink-0 gap-2 sm:w-auto"
-            >
-              {reconnectAllNodeMutation.isPending ? (
-                <>
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  {t('nodes.reconnectingAll', { defaultValue: 'Reconnecting...' })}
-                </>
-              ) : (
-                <>
-                  <RefreshCcw className="h-3 w-3" />
-                  {t('nodes.reconnectAll', { defaultValue: 'Reconnect All Nodes' })}
-                </>
-              )}
-            </Button>
-          </div>
-
-          {/* Reconnect All Dialog */}
-          <AlertDialog open={isReconnectAllDialogOpen} onOpenChange={setIsReconnectAllDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle className="flex items-center gap-2">
-                  <RefreshCcw className="h-5 w-5" />
-                  {t('nodes.reconnectAll', { defaultValue: 'Reconnect All Nodes' })}
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  {t('nodes.reconnectAllPrompt', {
-                    defaultValue: 'Are you sure you want to reconnect all nodes? This will temporarily disconnect all active connections and may take a few moments to complete.',
-                  })}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={reconnectAllNodeMutation.isPending}>{t('cancel', { defaultValue: 'Cancel' })}</AlertDialogCancel>
-                <AlertDialogAction onClick={handleReconnectAll} disabled={reconnectAllNodeMutation.isPending} className="gap-2">
-                  {reconnectAllNodeMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {t('nodes.reconnectingAll', { defaultValue: 'Reconnecting...' })}
-                    </>
-                  ) : (
-                    t('nodes.reconnectAll', { defaultValue: 'Reconnect All Nodes' })
-                  )}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          <SubscriptionFormActions onCancel={handleCancel} isSaving={isSaving} className="mt-auto sm:mt-auto" />
-        </form>
-      </Form>
+            <div className="rounded-xl border bg-muted/30 p-4">
+              <p className="text-muted-foreground text-xs">Role</p>
+              <p className="mt-1 text-lg font-semibold">{admin?.role?.name || 'owner'}</p>
+            </div>
+            <div className="rounded-xl border bg-muted/30 p-4">
+              <p className="text-muted-foreground text-xs">Last update</p>
+              <p className="mt-1 text-sm font-medium">{data?.updatedAt ? new Date(data.updatedAt).toLocaleString() : 'Not saved yet'}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

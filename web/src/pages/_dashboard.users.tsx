@@ -52,24 +52,24 @@ export default function UsersPage() {
   return (
     <div className="flex w-full flex-col items-start gap-2">
       <div className="animate-fade-in w-full transform-gpu" style={{ animationDuration: '400ms' }}>
-        <PageHeader title="Users" description="Only Telegram-bot-created PasarGuard accounts are shown here." tutorialUrl="https://github.com/PasarGuard/panel#readme" />
+        <PageHeader title="Users" description="PasarGuard accounts created through the sales flow are listed here." tutorialUrl="https://github.com/PasarGuard/panel#readme" />
         <Separator />
       </div>
 
       <div className="w-full px-3 pt-4 sm:px-4">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard title="Bot Users" value={formatNumber(users.length)} helper="Filtered by createdByBot" icon={UsersIcon} />
-          <MetricCard title="Active Users" value={formatNumber(totals.active)} helper="Currently active bot accounts" icon={Activity} />
-          <MetricCard title="Used Traffic" value={`${totals.traffic.toFixed(1)} GB`} helper="Total bot-user consumption" icon={HardDrive} />
-          <MetricCard title="Discount Codes" value={formatNumber(totals.discounts)} helper="Codes used by bot users" icon={BadgePercent} />
+          <MetricCard title="Users" value={formatNumber(users.length)} helper="Filtered user feed" icon={UsersIcon} />
+          <MetricCard title="Active Users" value={formatNumber(totals.active)} helper="Currently active accounts" icon={Activity} />
+          <MetricCard title="Used Traffic" value={`${totals.traffic.toFixed(1)} GB`} helper="Total user consumption" icon={HardDrive} />
+          <MetricCard title="Discount Codes" value={formatNumber(totals.discounts)} helper="Codes used by users" icon={BadgePercent} />
         </div>
 
         <Card className="mt-4 overflow-hidden border-primary/10 bg-card/95 shadow-sm">
           <CardHeader className="border-b bg-primary/5">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <CardTitle>PasarGuard Bot Users</CardTitle>
-                <CardDescription>Manual PasarGuard users are filtered out by the backend before rendering this table.</CardDescription>
+                <CardTitle>PasarGuard Users</CardTitle>
+                <CardDescription>Backend filtering keeps this list aligned with the sales flow.</CardDescription>
               </div>
               <Badge variant="blue">{formatMoney(totals.revenue, currency)} revenue</Badge>
             </div>
@@ -120,7 +120,7 @@ export default function UsersPage() {
                 {!users.length && (
                   <TableRow>
                     <TableCell colSpan={7} className="text-muted-foreground h-32 text-center">
-                      No bot-created users found.
+                      No users found.
                     </TableCell>
                   </TableRow>
                 )}

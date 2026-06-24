@@ -9,7 +9,10 @@ const Dashboard = lazyWithChunkRecovery(() => import('../pages/_dashboard._index
 const Users = lazyWithChunkRecovery(() => import('../pages/_dashboard.users'))
 const Statistics = lazyWithChunkRecovery(() => import('../pages/_dashboard.statistics'))
 const Products = lazyWithChunkRecovery(() => import('../pages/_dashboard.products'))
-const Setting = lazyWithChunkRecovery(() => import('../pages/_dashboard.setting'))
+const BotSetting = lazyWithChunkRecovery(() => import('../pages/_dashboard.bot-setting'))
+const Setting = lazyWithChunkRecovery(() => import('../pages/_dashboard.settings'))
+const SettingGeneral = lazyWithChunkRecovery(() => import('../pages/_dashboard.settings.general'))
+const SettingTheme = lazyWithChunkRecovery(() => import('../pages/_dashboard.settings.theme'))
 const Login = lazyWithChunkRecovery(() => import('../pages/login'))
 
 const fetchAdminLoader = async () => {
@@ -68,12 +71,39 @@ export const router = createHashRouter([
         ),
       },
       {
+        path: '/bot-setting',
+        element: (
+          <Suspense fallback={<LoadingSpinner />}>
+            <BotSetting />
+          </Suspense>
+        ),
+      },
+      {
         path: '/setting',
         element: (
           <Suspense fallback={<LoadingSpinner />}>
             <Setting />
           </Suspense>
         ),
+        children: [
+          { index: true, element: <Navigate to="/setting/general" replace /> },
+          {
+            path: 'general',
+            element: (
+              <Suspense fallback={<LoadingSpinner />}>
+                <SettingGeneral />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'theme',
+            element: (
+              <Suspense fallback={<LoadingSpinner />}>
+                <SettingTheme />
+              </Suspense>
+            ),
+          },
+        ],
       },
       {
         path: '*',
