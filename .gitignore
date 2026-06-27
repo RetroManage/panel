@@ -21,7 +21,6 @@ web/build/
 web/.vite/
 
 # Go / backend
-retropanel
 retropanel.exe
 *.exe
 *.test
