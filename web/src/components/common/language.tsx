@@ -37,7 +37,7 @@ export const Language: React.FC = () => {
               English
             </Button>
             <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => changeLanguage('fa')}>
-              فارسی
+              Persian
             </Button>
             <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => changeLanguage('zh')}>
               简体中文
@@ -61,7 +61,7 @@ export const Language: React.FC = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="top">
         <DropdownMenuItem onClick={() => changeLanguage('en')}>English</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => changeLanguage('fa')}>فارسی</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => changeLanguage('fa')}>Persian</DropdownMenuItem>
         <DropdownMenuItem onClick={() => changeLanguage('zh')}>简体中文</DropdownMenuItem>
         <DropdownMenuItem onClick={() => changeLanguage('ru')}>Русский</DropdownMenuItem>
       </DropdownMenuContent>

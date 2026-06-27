@@ -10,7 +10,9 @@ import (
 
 	"retropanel/backend/internal/auth"
 	"retropanel/backend/internal/config"
+	"retropanel/backend/internal/pasarguard"
 	"retropanel/backend/internal/store"
+	"retropanel/backend/internal/telegram"
 )
 
 const sessionCookieName = "retropanel_session"
@@ -20,6 +22,8 @@ type Server struct {
 	store    *store.Store
 	sessions *auth.Manager
 	logger   *slog.Logger
+	pg       *pasarguard.Client
+	bot      *telegram.Manager
 	mux      *http.ServeMux
 }
 
@@ -30,6 +34,11 @@ func NewServer(cfg config.Config, db *store.Store, logger *slog.Logger) http.Han
 		sessions: auth.NewManager(cfg.SessionSecret, 24*time.Hour),
 		logger:   logger,
 		mux:      http.NewServeMux(),
+		pg:       pasarguard.NewClient(),
+	}
+	s.bot = telegram.NewManager(db, logger, s.pg)
+	if err := s.bot.Apply(db.Panel()); err != nil {
+		logger.Warn("telegram bot was not started", "error", err)
 	}
 	s.routes()
 	return s.recover(s.cors(s.mux))
@@ -50,6 +59,12 @@ func (s *Server) routes() {
 	s.mux.Handle("PUT /api/settings/general", s.requireAuth(http.HandlerFunc(s.updateGeneral)))
 	s.mux.Handle("GET /api/settings/panel", s.requireAuth(http.HandlerFunc(s.getPanel)))
 	s.mux.Handle("PUT /api/settings/panel", s.requireAuth(http.HandlerFunc(s.updatePanel)))
+	s.mux.Handle("GET /api/panels", s.requireAuth(http.HandlerFunc(s.listPanels)))
+	s.mux.Handle("POST /api/panels/test", s.requireAuth(http.HandlerFunc(s.testPanelConnection)))
+	s.mux.Handle("POST /api/panels", s.requireAuth(http.HandlerFunc(s.createPanel)))
+	s.mux.Handle("PUT /api/panels/{id}", s.requireAuth(http.HandlerFunc(s.updatePanelConnection)))
+	s.mux.Handle("DELETE /api/panels/{id}", s.requireAuth(http.HandlerFunc(s.deletePanel)))
+	s.mux.Handle("POST /api/pasarguard/users", s.requireAuth(http.HandlerFunc(s.createPasarGuardUser)))
 	s.mux.HandleFunc("/", s.frontend)
 }
 

@@ -5,11 +5,14 @@
   "databasePath": "/var/lib/retropanel/retropanel.db",
   "backend": "Go",
   "frontend": "React + TypeScript",
+  "upstreamPanel": "PasarGuard",
   "sidebar": [
     "Dashboard",
-    "Sales Status",
-    "Admin Leaderboard",
-    "Price & Variable Settings",
-    "Panel & Telegram Bot Settings"
+    "Users",
+    "Statistics",
+    "Panels",
+    "Products",
+    "Bot Setting",
+    "Setting"
   ]
 }

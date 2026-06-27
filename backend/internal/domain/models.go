@@ -91,13 +91,48 @@ type GeneralSettingsUpdate struct {
 	AdminPassword string `json:"adminPassword"`
 }
 
+type PasarGuardPanel struct {
+	ID                 string    `json:"id"`
+	Name               string    `json:"name"`
+	BaseURL            string    `json:"baseUrl"`
+	Username           string    `json:"username"`
+	Password           string    `json:"-"`
+	PasswordConfigured bool      `json:"passwordConfigured"`
+	AccessToken        string    `json:"-"`
+	TokenType          string    `json:"tokenType,omitempty"`
+	Status             string    `json:"status"`
+	LastError          string    `json:"lastError,omitempty"`
+	CreatedAt          time.Time `json:"createdAt"`
+	UpdatedAt          time.Time `json:"updatedAt"`
+	LastTestedAt       time.Time `json:"lastTestedAt"`
+}
+
+type PasarGuardPanelInput struct {
+	Name     string `json:"name"`
+	BaseURL  string `json:"baseUrl"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type PasarGuardUserCreateRequest struct {
+	PanelID                string `json:"panelId"`
+	Username               string `json:"username"`
+	Status                 string `json:"status"`
+	Expire                 any    `json:"expire"`
+	DataLimitGB            int64  `json:"dataLimitGb"`
+	DataLimitBytes         int64  `json:"dataLimitBytes"`
+	DataLimitResetStrategy string `json:"dataLimitResetStrategy"`
+	Note                   string `json:"note"`
+}
+
 type Snapshot struct {
-	Admins      []Admin          `json:"admins"`
-	Dashboard   DashboardSummary `json:"dashboard"`
-	Sales       []SalesPoint     `json:"sales"`
-	BotUsers    []BotUser        `json:"botUsers"`
-	Leaderboard []AdminScore     `json:"leaderboard"`
-	Pricing     PricingSettings  `json:"pricing"`
-	Panel       PanelSettings    `json:"panel"`
-	UpdatedAt   time.Time        `json:"updatedAt"`
+	Admins      []Admin           `json:"admins"`
+	Dashboard   DashboardSummary  `json:"dashboard"`
+	Sales       []SalesPoint      `json:"sales"`
+	BotUsers    []BotUser         `json:"botUsers"`
+	Leaderboard []AdminScore      `json:"leaderboard"`
+	Pricing     PricingSettings   `json:"pricing"`
+	Panel       PanelSettings     `json:"panel"`
+	Panels      []PasarGuardPanel `json:"panels"`
+	UpdatedAt   time.Time         `json:"updatedAt"`
 }

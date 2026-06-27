@@ -92,6 +92,44 @@ export type GeneralSettings = {
   updatedAt?: string
 }
 
+
+export type PasarGuardPanel = {
+  id: string
+  name: string
+  baseUrl: string
+  username: string
+  passwordConfigured: boolean
+  tokenType?: string
+  status: 'connected' | 'failed' | string
+  lastError?: string
+  createdAt: string
+  updatedAt: string
+  lastTestedAt: string
+}
+
+export type PasarGuardPanelPayload = {
+  name?: string
+  baseUrl: string
+  username: string
+  password?: string
+}
+
+export type PanelConnectionResult = {
+  ok: boolean
+  message: string
+  result?: {
+    ok: boolean
+    baseUrl: string
+    username: string
+    message: string
+    admin?: { username?: string; status?: string }
+  }
+  panel?: PasarGuardPanel
+  panels?: PasarGuardPanel[]
+  error?: string
+  testedAt: string
+}
+
 export type GeneralSettingsPayload = {
   panelName: string
   publicBaseUrl: string
@@ -199,6 +237,31 @@ export const saveGeneralSettings = (payload: GeneralSettingsPayload) =>
     method: 'PUT',
     body: JSON.stringify(payload),
   })
+
+export const getPanels = async () => {
+  const response = await request<{ items: PasarGuardPanel[] }>('/api/panels')
+  return response.items
+}
+export const testPanelConnection = (payload: PasarGuardPanelPayload) =>
+  request<PanelConnectionResult>('/api/panels/test', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+export const createPanel = (payload: PasarGuardPanelPayload) =>
+  request<PanelConnectionResult>('/api/panels', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+export const updatePanel = ({ id, ...payload }: PasarGuardPanelPayload & { id: string }) =>
+  request<PanelConnectionResult>(`/api/panels/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+export const deletePanel = (id: string) =>
+  request<{ ok: boolean; items: PasarGuardPanel[] }>(`/api/panels/${id}`, {
+    method: 'DELETE',
+  })
+
 export const getPanelSettings = () => request<PanelSettings>('/api/settings/panel')
 export const savePanelSettings = (payload: PanelSettings) =>
   request<PanelSettings>('/api/settings/panel', {
@@ -227,5 +290,12 @@ export const usePricingSettings = () => useQuery({ queryKey: ['pricing-settings'
 export const useSavePricingSettings = () => useMutation({ mutationFn: savePricingSettings })
 export const useGeneralSettings = () => useQuery({ queryKey: ['general-settings'], queryFn: getGeneralSettings })
 export const useSaveGeneralSettings = () => useMutation({ mutationFn: saveGeneralSettings })
+
+export const usePanels = () => useQuery({ queryKey: ['panels'], queryFn: getPanels })
+export const useTestPanelConnection = () => useMutation({ mutationFn: testPanelConnection })
+export const useCreatePanel = () => useMutation({ mutationFn: createPanel })
+export const useUpdatePanel = () => useMutation({ mutationFn: updatePanel })
+export const useDeletePanel = () => useMutation({ mutationFn: deletePanel })
+
 export const usePanelSettings = () => useQuery({ queryKey: ['panel-settings'], queryFn: getPanelSettings })
 export const useSavePanelSettings = () => useMutation({ mutationFn: savePanelSettings })

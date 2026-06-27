@@ -2,9 +2,12 @@ package http
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"retropanel/backend/internal/domain"
+	"retropanel/backend/internal/telegram"
 )
 
 type loginRequest struct {
@@ -110,9 +113,41 @@ func (s *Server) updatePanel(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid panel settings payload")
 		return
 	}
+	if input.BotEnabled {
+		input.TelegramBotToken = strings.TrimSpace(input.TelegramBotToken)
+		input.TelegramOwnerID = strings.TrimSpace(input.TelegramOwnerID)
+		input.TelegramAdminChat = strings.TrimSpace(input.TelegramAdminChat)
+		if input.TelegramOwnerID == "" {
+			input.TelegramOwnerID = input.TelegramAdminChat
+		}
+		if input.TelegramAdminChat == "" {
+			input.TelegramAdminChat = input.TelegramOwnerID
+		}
+		if input.TelegramBotToken == "" {
+			writeError(w, http.StatusBadRequest, "telegram bot token is required when bot activation is enabled")
+			return
+		}
+		if input.TelegramOwnerID == "" {
+			writeError(w, http.StatusBadRequest, "owner numeric ID is required when bot activation is enabled")
+			return
+		}
+		if _, err := strconv.ParseInt(input.TelegramOwnerID, 10, 64); err != nil {
+			writeError(w, http.StatusBadRequest, "owner ID must be a numeric Telegram ID")
+			return
+		}
+		if err := telegram.ValidateToken(r.Context(), input.TelegramBotToken); err != nil {
+			writeError(w, http.StatusBadGateway, "telegram bot token validation failed: "+err.Error())
+			return
+		}
+	}
 	if err := s.store.SavePanel(input); err != nil {
 		writeError(w, http.StatusInternalServerError, "could not save panel settings")
 		return
 	}
-	writeJSON(w, http.StatusOK, s.store.Panel())
+	saved := s.store.Panel()
+	if err := s.bot.Apply(saved); err != nil {
+		writeError(w, http.StatusBadGateway, "telegram bot activation failed: "+err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, saved)
 }

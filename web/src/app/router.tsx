@@ -8,6 +8,7 @@ const DashboardLayout = lazyWithChunkRecovery(() => import('../pages/_dashboard'
 const Dashboard = lazyWithChunkRecovery(() => import('../pages/_dashboard._index'))
 const Users = lazyWithChunkRecovery(() => import('../pages/_dashboard.users'))
 const Statistics = lazyWithChunkRecovery(() => import('../pages/_dashboard.statistics'))
+const Panels = lazyWithChunkRecovery(() => import('../pages/_dashboard.panels'))
 const Products = lazyWithChunkRecovery(() => import('../pages/_dashboard.products'))
 const BotSetting = lazyWithChunkRecovery(() => import('../pages/_dashboard.bot-setting'))
 const Setting = lazyWithChunkRecovery(() => import('../pages/_dashboard.settings'))
@@ -59,6 +60,15 @@ export const router = createHashRouter([
         element: (
           <Suspense fallback={<LoadingSpinner />}>
             <Statistics />
+          </Suspense>
+        ),
+      },
+
+      {
+        path: '/panels',
+        element: (
+          <Suspense fallback={<LoadingSpinner />}>
+            <Panels />
           </Suspense>
         ),
       },

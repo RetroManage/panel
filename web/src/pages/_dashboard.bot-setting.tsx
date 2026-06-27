@@ -15,9 +15,9 @@ import { toast } from 'sonner'
 
 type BotTab = 'texts' | 'buttons' | 'status'
 
-const defaultTexts = `welcome=Welcome to PasarGuard\nplans=Choose your product\nprofile=Your account status\nsupport=Contact support`
-const defaultButtons = `Buy service | تمدید سرویس | وضعیت حساب\nتعرفه‌ها | پشتیبانی | آموزش اتصال`
-const defaultStatus = `buy=true\nrenew=true\nprofile=true\nsupport=true\ntutorial=false`
+const defaultTexts = `welcome=Welcome to RetroPanel\nplans=Choose your product\nprofile=Your account status\nsupport=Contact support\ntrial=Your trial subscription is being prepared\nwallet=Wallet balance will be shown here\nconnection=Open the connection guide from your service details`
+const defaultButtons = `Buy Service | My Services\nTrial Subscription | Wallet\nConnection Guide | Support`
+const defaultStatus = `buy=true\nservices=true\ntrial=true\nwallet=true\nconnection=true\nsupport=true\nadmin_panel=true`
 
 export default function BotSettingPage() {
   const queryClient = useQueryClient()
@@ -52,26 +52,30 @@ export default function BotSettingPage() {
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    await savePanel.mutateAsync({
-      panelName: data?.panelName || 'RetroPanel Accounting',
-      publicBaseUrl: data?.publicBaseUrl || '',
-      telegramBotToken,
-      telegramAdminChat: telegramOwnerId,
-      telegramOwnerId,
-      dailyReportEnabled: data?.dailyReportEnabled ?? true,
-      botEnabled,
-      botTexts,
-      botButtons,
-      botButtonStatus,
-    })
-    queryClient.invalidateQueries({ queryKey: ['panel-settings'] })
-    toast.success(botEnabled ? 'Bot settings saved and activated' : 'Bot settings saved')
+    try {
+      await savePanel.mutateAsync({
+        panelName: data?.panelName || 'RetroPanel Accounting',
+        publicBaseUrl: data?.publicBaseUrl || '',
+        telegramBotToken,
+        telegramAdminChat: telegramOwnerId,
+        telegramOwnerId,
+        dailyReportEnabled: data?.dailyReportEnabled ?? true,
+        botEnabled,
+        botTexts,
+        botButtons,
+        botButtonStatus,
+      })
+      queryClient.invalidateQueries({ queryKey: ['panel-settings'] })
+      toast.success(botEnabled ? 'Bot settings saved and activated' : 'Bot settings saved')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not save bot settings')
+    }
   }
 
   const tabs = [
-    { id: 'texts' as const, label: 'تنظیمات متن ها', icon: MessageSquareText },
-    { id: 'buttons' as const, label: 'تنظیمات دکمه ها', icon: Keyboard },
-    { id: 'status' as const, label: 'وضعیت دکمه ها', icon: ToggleLeft },
+    { id: 'texts' as const, label: 'Bot Texts', icon: MessageSquareText },
+    { id: 'buttons' as const, label: 'Menu Buttons', icon: Keyboard },
+    { id: 'status' as const, label: 'Button Status', icon: ToggleLeft },
   ]
 
   return (
@@ -89,7 +93,7 @@ export default function BotSettingPage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2"><Bot className="text-primary size-5" /> Telegram Bot</CardTitle>
-                  <CardDescription>Token, numeric owner ID, and activation state.</CardDescription>
+                  <CardDescription>Token, numeric owner ID, and live activation state.</CardDescription>
                 </div>
                 <Badge variant={botEnabled ? 'green' : 'orange'}>{botEnabled ? 'Active' : 'Inactive'}</Badge>
               </div>
@@ -115,7 +119,7 @@ export default function BotSettingPage() {
           <Card className="border-primary/10 bg-card/90 shadow-sm shadow-primary/5 backdrop-blur">
             <CardHeader>
               <CardTitle>Readiness</CardTitle>
-              <CardDescription>Configuration completion before real backend integration.</CardDescription>
+              <CardDescription>Configuration completion for the live Telegram bot backend.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="relative h-3 overflow-hidden rounded-full bg-muted">
@@ -137,7 +141,7 @@ export default function BotSettingPage() {
         <Card className="overflow-hidden border-primary/10 bg-card/90 shadow-sm shadow-primary/5 backdrop-blur">
           <CardHeader className="border-b bg-muted/25">
             <CardTitle className="flex items-center gap-2"><Settings2 className="text-primary size-5" /> Bot Sections</CardTitle>
-            <CardDescription>Header tabs match the PasarGuard Nodes-style switching pattern.</CardDescription>
+            <CardDescription>Configure the live Telegram bot copy, keyboard rows, and button availability.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
 <div className="flex border-b px-4">
@@ -159,23 +163,23 @@ export default function BotSettingPage() {
             <div className="p-4">
               {activeTab === 'texts' && (
                 <div className="space-y-2">
-                  <Label>متن‌های ربات</Label>
+                  <Label>Bot texts</Label>
                   <Textarea value={botTexts} onChange={event => setBotTexts(event.target.value)} className="min-h-64 font-mono text-sm" />
-                  <p className="text-muted-foreground text-xs">هر خط یک کلید و مقدار باشد. مثال: welcome=Welcome to PasarGuard</p>
+                  <p className="text-muted-foreground text-xs">Each line must be a key=value pair. Example: welcome=Welcome to RetroPanel</p>
                 </div>
               )}
               {activeTab === 'buttons' && (
                 <div className="space-y-2">
-                  <Label>چیدمان دکمه‌ها</Label>
+                  <Label>Button layout</Label>
                   <Textarea value={botButtons} onChange={event => setBotButtons(event.target.value)} className="min-h-64 font-mono text-sm" />
-                  <p className="text-muted-foreground text-xs">هر خط یک ردیف دکمه است و دکمه‌ها با | جدا می‌شوند.</p>
+                  <p className="text-muted-foreground text-xs">Each line is a keyboard row. Separate buttons with |.</p>
                 </div>
               )}
               {activeTab === 'status' && (
                 <div className="space-y-2">
-                  <Label>وضعیت دکمه‌ها</Label>
+                  <Label>Button availability</Label>
                   <Textarea value={botButtonStatus} onChange={event => setBotButtonStatus(event.target.value)} className="min-h-64 font-mono text-sm" />
-                  <p className="text-muted-foreground text-xs">برای فعال/غیرفعال‌سازی دکمه‌ها از کلیدهای true/false استفاده کن.</p>
+                  <p className="text-muted-foreground text-xs">Use true/false values to enable or disable each button.</p>
                 </div>
               )}
             </div>

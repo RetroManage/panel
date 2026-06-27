@@ -2,9 +2,9 @@ import { ThemeToggle } from '@/components/common/theme-toggle'
 import { NavMain } from '@/components/layout/nav-main'
 import { NavUser } from '@/components/layout/nav-user'
 import { Button } from '@/components/ui/button'
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, useSidebar } from '@/components/ui/sidebar'
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
-import { Activity, Bot, ChevronsLeft, ChevronsRight, LayoutDashboardIcon, Package, Palette, Settings2, ShieldCheck, SlidersHorizontal, UsersIcon } from 'lucide-react'
+import { Activity, Bot, ChevronsLeft, ChevronsRight, LayoutDashboardIcon, Package, Palette, ServerCog, Settings2, ShieldCheck, SlidersHorizontal, UsersIcon } from 'lucide-react'
 import * as React from 'react'
 import { Link } from 'react-router'
 import { useAdmin } from '@/hooks/use-admin'
@@ -32,6 +32,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: 'Statistics',
         url: '/statistics',
         icon: Activity,
+      },
+      {
+        title: 'Panels',
+        url: '/panels',
+        icon: ServerCog,
       },
       {
         title: 'Products',
@@ -106,7 +111,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
         <NavUser username={data.user} admin={admin} />
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   )
 }

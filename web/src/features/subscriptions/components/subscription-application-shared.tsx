@@ -26,7 +26,7 @@ export const platformOptions = [
 
 export const languageOptions = [
   { value: 'en', label: 'English', icon: '🇺🇸' },
-  { value: 'fa', label: 'فارسی', icon: '🇮🇷' },
+  { value: 'fa', label: 'Persian', icon: '🇮🇷' },
   { value: 'ru', label: 'Русский', icon: '🇷🇺' },
   { value: 'zh', label: '中文', icon: '🇨🇳' },
 ] as const
