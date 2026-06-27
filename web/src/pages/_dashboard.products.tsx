@@ -7,7 +7,7 @@ export default function ProductsPage() {
   return (
     <div className="flex w-full flex-col items-start gap-2">
       <div className="animate-fade-in w-full transform-gpu" style={{ animationDuration: '400ms' }}>
-        <PageHeader title="Products" description="Product definition area for the Telegram sales bot." tutorialUrl="https://github.com/PasarGuard/panel#readme" />
+        <PageHeader title="Products" description="Product definition area for the Telegram sales bot." />
         <Separator />
       </div>
       <div className="flex w-full px-3 pt-4 sm:px-4">

@@ -11,11 +11,10 @@ export default function StatisticsPage() {
   const { data: summary } = useDashboardSummary()
   const { data: sales = [] } = useSalesStatus()
   const { data: users = [] } = useBotUsers()
-  const currency = summary?.currency || 'IRR'
+  const currency = summary?.currency || 'Toman'
   const totalSales = sales.reduce((total, item) => total + item.amount, 0)
   const totalOrders = sales.reduce((total, item) => total + item.orders, 0)
   const totalTraffic = users.reduce((total, user) => total + user.usedTrafficGb, 0)
-  const activeUsers = users.filter(user => user.status === 'active').length
   const maxAmount = Math.max(...sales.map(item => item.amount), 1)
   const firstAmount = sales[0]?.amount || 0
   const lastAmount = sales[sales.length - 1]?.amount || 0
@@ -25,14 +24,14 @@ export default function StatisticsPage() {
   return (
     <div className="flex w-full flex-col items-start gap-2">
       <div className="animate-fade-in w-full transform-gpu" style={{ animationDuration: '400ms' }}>
-        <PageHeader title="Statistics" description="Panel connectivity, user consumption, and sales movement for the PasarGuard stack." tutorialUrl="https://github.com/PasarGuard/panel#readme" />
+        <PageHeader title="Statistics" description="Panel connectivity, user consumption, and sales movement from the live stack." />
         <Separator />
       </div>
 
       <div className="w-full px-3 pt-4 sm:px-4">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard title="Panel Connection" value="Online" helper="Local API session is authenticated" icon={Wifi} />
-          <MetricCard title="Users Online" value={formatNumber(activeUsers)} helper={`${formatNumber(users.length)} users tracked`} icon={RadioTower} />
+          <MetricCard title="Panel Connection" value={summary?.panelStatus || 'Waiting'} helper={summary?.realData ? 'Live upstream data' : 'Connect a panel for live data'} icon={Wifi} />
+          <MetricCard title="Users Online" value={formatNumber(summary?.onlineUsers ?? 0)} helper={`${formatNumber(summary?.totalUsers ?? users.length)} users tracked`} icon={RadioTower} />
           <MetricCard title="Traffic Used" value={`${totalTraffic.toFixed(1)} GB`} helper="Consumption from users" icon={Activity} />
           <MetricCard title="Sales Movement" value={`${salesDelta >= 0 ? '+' : ''}${salesDelta.toFixed(1)}%`} helper="First-to-last visible sales delta" icon={TrendingUp} />
         </div>
@@ -53,12 +52,12 @@ export default function StatisticsPage() {
             </CardHeader>
             <CardContent>
               <div className="flex h-72 items-end gap-3 rounded-xl border bg-background/60 p-4">
-                {sales.map(item => (
+                {sales.length ? sales.map(item => (
                   <div key={item.label} className="flex h-full flex-1 flex-col justify-end gap-2">
                     <div className="bg-primary/80 hover:bg-primary min-h-2 rounded-t-lg shadow-sm shadow-primary/20 transition-all" style={{ height: `${Math.max(8, (item.amount / maxAmount) * 100)}%` }} />
                     <div className="text-muted-foreground text-center text-xs">{item.label}</div>
                   </div>
-                ))}
+                )) : <div className="text-muted-foreground m-auto text-center text-sm">No real sales records yet.</div>}
               </div>
             </CardContent>
           </Card>
@@ -71,7 +70,7 @@ export default function StatisticsPage() {
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <span className="text-sm">Connection status</span>
-                <Badge variant="green">Connected</Badge>
+                <Badge variant={summary?.realData ? 'green' : 'orange'}>{summary?.panelStatus || 'Waiting'}</Badge>
               </div>
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <span className="text-sm">Total sales</span>

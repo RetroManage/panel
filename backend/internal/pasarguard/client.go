@@ -199,6 +199,129 @@ func (c *Client) GetUser(ctx context.Context, baseURL, accessToken, username str
 	return result, nil
 }
 
+func (c *Client) Users(ctx context.Context, baseURL, accessToken string) ([]map[string]any, int, error) {
+	baseURL, err := NormalizeBaseURL(baseURL)
+	if err != nil {
+		return nil, 0, err
+	}
+	var raw any
+	if err := c.authenticatedGet(ctx, baseURL+"/api/users", accessToken, &raw); err != nil {
+		return nil, 0, err
+	}
+	users := extractAnyMapSlice(raw, "users", "items", "data", "results")
+	total := len(users)
+	if object, ok := raw.(map[string]any); ok {
+		if declared := int(numberFromKeys(object, "total", "count", "total_users")); declared > 0 {
+			total = declared
+		}
+	}
+	return users, total, nil
+}
+
+func extractAnyMapSlice(raw any, keys ...string) []map[string]any {
+	switch value := raw.(type) {
+	case []any:
+		items := make([]map[string]any, 0, len(value))
+		for _, row := range value {
+			if item, ok := row.(map[string]any); ok {
+				items = append(items, item)
+			}
+		}
+		return items
+	case map[string]any:
+		return extractMapSlice(value, keys...)
+	default:
+		return nil
+	}
+}
+
+func (c *Client) SystemStats(ctx context.Context, baseURL, accessToken string) (map[string]any, error) {
+	baseURL, err := NormalizeBaseURL(baseURL)
+	if err != nil {
+		return nil, err
+	}
+	var raw map[string]any
+	if err := c.authenticatedGet(ctx, baseURL+"/api/system", accessToken, &raw); err != nil {
+		return nil, err
+	}
+	return raw, nil
+}
+
+func (c *Client) SystemUsersStats(ctx context.Context, baseURL, accessToken string) (map[string]any, error) {
+	baseURL, err := NormalizeBaseURL(baseURL)
+	if err != nil {
+		return nil, err
+	}
+	var raw map[string]any
+	if err := c.authenticatedGet(ctx, baseURL+"/api/system/users", accessToken, &raw); err != nil {
+		return nil, err
+	}
+	return raw, nil
+}
+
+func (c *Client) authenticatedGet(ctx context.Context, endpoint, accessToken string, out any) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	return c.doJSON(req, out)
+}
+
+func extractMapSlice(raw map[string]any, keys ...string) []map[string]any {
+	for _, key := range keys {
+		value, ok := raw[key]
+		if !ok {
+			continue
+		}
+		if rows, ok := value.([]any); ok {
+			items := make([]map[string]any, 0, len(rows))
+			for _, row := range rows {
+				if item, ok := row.(map[string]any); ok {
+					items = append(items, item)
+				}
+			}
+			return items
+		}
+		if nested, ok := value.(map[string]any); ok {
+			items := extractMapSlice(nested, "users", "items", "data", "results")
+			if len(items) > 0 {
+				return items
+			}
+		}
+	}
+	return nil
+}
+
+func numberFromKeys(raw map[string]any, keys ...string) float64 {
+	for _, key := range keys {
+		if value, ok := raw[key]; ok {
+			if number, ok := asNumber(value); ok {
+				return number
+			}
+		}
+	}
+	return 0
+}
+
+func asNumber(value any) (float64, bool) {
+	switch v := value.(type) {
+	case float64:
+		return v, true
+	case float32:
+		return float64(v), true
+	case int:
+		return float64(v), true
+	case int64:
+		return float64(v), true
+	case json.Number:
+		parsed, err := v.Float64()
+		return parsed, err == nil
+	}
+	return 0, false
+}
+
 func (c *Client) doJSON(req *http.Request, out any) error {
 	res, err := c.http.Do(req)
 	if err != nil {

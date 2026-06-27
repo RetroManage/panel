@@ -10,7 +10,7 @@ import { Medal } from 'lucide-react'
 export default function AdminLeaderboard() {
   const { data: summary } = useDashboardSummary()
   const { data: admins = [] } = useAdminLeaderboard()
-  const currency = summary?.currency || 'IRR'
+  const currency = summary?.currency || 'Toman'
 
   return (
     <div className="flex w-full flex-col items-start gap-2">

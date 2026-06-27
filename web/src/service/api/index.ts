@@ -30,6 +30,29 @@ export type DashboardSummary = {
   activeAdmins: number
   currency: string
   lastReconciledAt: string
+  totalUsers?: number
+  activeUsers?: number
+  onlineUsers?: number
+  limitedUsers?: number
+  expiredUsers?: number
+  disabledUsers?: number
+  onHoldUsers?: number
+  totalTrafficBytes?: number
+  incomingBandwidth?: number
+  outgoingBandwidth?: number
+  cpuUsage?: number
+  cpuCores?: number
+  memoryUsedBytes?: number
+  memoryTotalBytes?: number
+  diskUsedBytes?: number
+  diskTotalBytes?: number
+  uptimeSeconds?: number
+  systemVersion?: string
+  panelStatus?: string
+  panelName?: string
+  source?: string
+  realData?: boolean
+  error?: string
 }
 
 export type SalesPoint = {
@@ -93,7 +116,7 @@ export type GeneralSettings = {
 }
 
 
-export type PasarGuardPanel = {
+export type PanelConnection = {
   id: string
   name: string
   baseUrl: string
@@ -107,7 +130,7 @@ export type PasarGuardPanel = {
   lastTestedAt: string
 }
 
-export type PasarGuardPanelPayload = {
+export type PanelConnectionPayload = {
   name?: string
   baseUrl: string
   username: string
@@ -124,8 +147,8 @@ export type PanelConnectionResult = {
     message: string
     admin?: { username?: string; status?: string }
   }
-  panel?: PasarGuardPanel
-  panels?: PasarGuardPanel[]
+  panel?: PanelConnection
+  panels?: PanelConnection[]
   error?: string
   testedAt: string
 }
@@ -217,8 +240,8 @@ export const getSalesStatus = async () => {
   return response.items
 }
 export const getBotUsers = async () => {
-  const response = await request<{ items: BotUser[] }>('/api/bot/users')
-  return response.items.filter(user => user.createdByBot)
+  const response = await request<{ items: BotUser[]; error?: string }>('/api/bot/users')
+  return response.items
 }
 export const getAdminLeaderboard = async () => {
   const response = await request<{ items: AdminScore[] }>('/api/admins/leaderboard')
@@ -239,26 +262,26 @@ export const saveGeneralSettings = (payload: GeneralSettingsPayload) =>
   })
 
 export const getPanels = async () => {
-  const response = await request<{ items: PasarGuardPanel[] }>('/api/panels')
+  const response = await request<{ items: PanelConnection[] }>('/api/panels')
   return response.items
 }
-export const testPanelConnection = (payload: PasarGuardPanelPayload) =>
+export const testPanelConnection = (payload: PanelConnectionPayload) =>
   request<PanelConnectionResult>('/api/panels/test', {
     method: 'POST',
     body: JSON.stringify(payload),
   })
-export const createPanel = (payload: PasarGuardPanelPayload) =>
+export const createPanel = (payload: PanelConnectionPayload) =>
   request<PanelConnectionResult>('/api/panels', {
     method: 'POST',
     body: JSON.stringify(payload),
   })
-export const updatePanel = ({ id, ...payload }: PasarGuardPanelPayload & { id: string }) =>
+export const updatePanel = ({ id, ...payload }: PanelConnectionPayload & { id: string }) =>
   request<PanelConnectionResult>(`/api/panels/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   })
 export const deletePanel = (id: string) =>
-  request<{ ok: boolean; items: PasarGuardPanel[] }>(`/api/panels/${id}`, {
+  request<{ ok: boolean; items: PanelConnection[] }>(`/api/panels/${id}`, {
     method: 'DELETE',
   })
 

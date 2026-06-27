@@ -14,7 +14,7 @@ interface Tab {
 
 const tabs: Tab[] = [
   { id: 'general', label: 'General', icon: SettingsIcon, url: '/setting/general', description: 'Panel identity and owner access controls.' },
-  { id: 'theme', label: 'Theme', icon: Palette, url: '/setting/theme', description: 'PasarGuard-style appearance, color, radius and preview controls.' },
+  { id: 'theme', label: 'Theme', icon: Palette, url: '/setting/theme', description: 'Modern appearance, color, radius and preview controls.' },
 ]
 
 export default function Settings() {

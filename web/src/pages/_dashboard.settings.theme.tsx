@@ -29,7 +29,7 @@ const radiusOptions = [
 
 const modeOptions = [
   { value: 'light' as Theme, label: 'Light', icon: Sun, description: 'Clean bright interface.' },
-  { value: 'dark' as Theme, label: 'Dark', icon: Moon, description: 'PasarGuard dark control style.' },
+  { value: 'dark' as Theme, label: 'Dark', icon: Moon, description: 'Soft dark control style.' },
   { value: 'system' as Theme, label: 'System', icon: Monitor, description: 'Follow operating system.' },
 ]
 
@@ -59,7 +59,7 @@ export default function ThemeSettings() {
     setIsResetting(true)
     resetToDefaults()
     window.setTimeout(() => setIsResetting(false), 300)
-    toast.success('Theme reset to PasarGuard defaults')
+    toast.success('Theme reset to clean defaults')
   }
 
   return (
@@ -70,7 +70,7 @@ export default function ThemeSettings() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle className="flex items-center gap-2"><SunMoon className="text-primary size-5" /> Theme</CardTitle>
-              <CardDescription>PasarGuard-style appearance controls for mode, accent color, border radius and live preview.</CardDescription>
+              <CardDescription>Appearance controls for mode, accent color, border radius and live preview.</CardDescription>
             </div>
             <Badge variant="blue">{isSystemTheme ? `System · ${resolvedTheme}` : theme}</Badge>
           </div>
@@ -207,7 +207,7 @@ export default function ThemeSettings() {
             <div className="flex items-center justify-between rounded-xl border bg-muted/25 p-4">
               <div className="space-y-1">
                 <Label>Dense preview</Label>
-                <p className="text-muted-foreground text-xs">Use compact PasarGuard-style information density.</p>
+                <p className="text-muted-foreground text-xs">Use compact information density.</p>
               </div>
               <Switch checked={densePreview} onCheckedChange={setDensePreview} />
             </div>
@@ -222,7 +222,7 @@ export default function ThemeSettings() {
             </div>
             <Button variant="outline" onClick={handleReset} disabled={isResetting} className="w-full">
               <RotateCcw className="size-4" />
-              {isResetting ? 'Resetting...' : 'Reset to PasarGuard defaults'}
+              {isResetting ? 'Resetting...' : 'Reset to clean defaults'}
             </Button>
           </CardContent>
         </Card>

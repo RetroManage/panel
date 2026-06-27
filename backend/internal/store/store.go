@@ -110,14 +110,7 @@ func (s *Store) Sales() []domain.SalesPoint {
 func (s *Store) BotUsers() []domain.BotUser {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-
-	users := make([]domain.BotUser, 0, len(s.data.BotUsers))
-	for _, user := range s.data.BotUsers {
-		if user.CreatedByBot {
-			users = append(users, user)
-		}
-	}
-	return users
+	return append([]domain.BotUser(nil), s.data.BotUsers...)
 }
 
 func (s *Store) Leaderboard() []domain.AdminScore {
@@ -171,7 +164,9 @@ func (s *Store) SaveGeneral(next domain.GeneralSettingsUpdate) (domain.GeneralSe
 	if next.PanelName != "" {
 		s.data.Panel.PanelName = next.PanelName
 	}
-	s.data.Panel.PublicBaseURL = next.PublicBaseURL
+	if next.PublicBaseURL != "" {
+		s.data.Panel.PublicBaseURL = next.PublicBaseURL
+	}
 	if len(s.data.Admins) == 0 {
 		admin, err := newAdmin("admin", "Owner", "owner", "ChangeMe123!")
 		if err != nil {
@@ -408,7 +403,7 @@ func panelDisplayName(baseURL, username string) string {
 	if username != "" {
 		return username + " panel"
 	}
-	return "PasarGuard Panel"
+	return "Connected Panel"
 }
 
 func (s *Store) load() error {
@@ -448,47 +443,26 @@ func defaultSnapshot() domain.Snapshot {
 	now := time.Now().UTC()
 	return domain.Snapshot{
 		Dashboard: domain.DashboardSummary{
-			GrossSales:       184500000,
-			NetRevenue:       151200000,
-			OpenInvoices:     12,
-			ConversionRate:   37.8,
-			ActiveAdmins:     4,
-			Currency:         "IRR",
+			Currency:         "Toman",
 			LastReconciledAt: now.Format(time.RFC3339),
+			PanelStatus:      "not_connected",
+			Source:           "local",
 		},
-		Sales: []domain.SalesPoint{
-			{Label: "Mon", Amount: 18000000, Orders: 9},
-			{Label: "Tue", Amount: 26500000, Orders: 13},
-			{Label: "Wed", Amount: 31000000, Orders: 15},
-			{Label: "Thu", Amount: 22700000, Orders: 11},
-			{Label: "Fri", Amount: 39200000, Orders: 18},
-			{Label: "Sat", Amount: 47100000, Orders: 21},
-		},
-		BotUsers: []domain.BotUser{
-			{ID: "bot-1001", Username: "pg_telegram_1001", TelegramID: "100183024", PlanName: "30D Premium", Status: "active", UsedTrafficGB: 42.6, DataLimitGB: 100, TotalPaid: 3200000, DiscountCodes: 1, CreatedByBot: true, CreatedAt: now.AddDate(0, 0, -18), ExpiresAt: now.AddDate(0, 0, 12)},
-			{ID: "bot-1002", Username: "pg_telegram_1002", TelegramID: "100291776", PlanName: "60D Business", Status: "active", UsedTrafficGB: 78.4, DataLimitGB: 200, TotalPaid: 5900000, DiscountCodes: 0, CreatedByBot: true, CreatedAt: now.AddDate(0, 0, -11), ExpiresAt: now.AddDate(0, 0, 49)},
-		},
-		Leaderboard: []domain.AdminScore{
-			{AdminID: "seed-1", DisplayName: "Nika Moradi", ClosedDeals: 42, Revenue: 68000000, CollectionPct: 96.2},
-			{AdminID: "seed-2", DisplayName: "Arman Salehi", ClosedDeals: 38, Revenue: 61200000, CollectionPct: 92.4},
-			{AdminID: "seed-3", DisplayName: "Sara Rahimi", ClosedDeals: 31, Revenue: 48500000, CollectionPct: 89.1},
-		},
+		Sales:       []domain.SalesPoint{},
+		BotUsers:    []domain.BotUser{},
+		Leaderboard: []domain.AdminScore{},
 		Pricing: domain.PricingSettings{
-			Currency:           "IRR",
-			BasePlanPrice:      3200000,
-			RenewalDiscountPct: 7.5,
-			TaxPct:             9,
-			CommissionPct:      12,
-			Variables: map[string]string{
-				"support_fee": "250000",
-				"gateway_fee": "1.2%",
-				"trial_days":  "3",
-			},
-			UpdatedAt: now,
+			Currency:           "Toman",
+			BasePlanPrice:      0,
+			RenewalDiscountPct: 0,
+			TaxPct:             0,
+			CommissionPct:      0,
+			Variables:          map[string]string{},
+			UpdatedAt:          now,
 		},
 		Panel: domain.PanelSettings{
-			PanelName:          "RetroPanel Accounting",
-			PublicBaseURL:      "https://panel.example.com",
+			PanelName:          "RetroPanel",
+			PublicBaseURL:      "",
 			TelegramBotToken:   "",
 			TelegramAdminChat:  "",
 			TelegramOwnerID:    "",

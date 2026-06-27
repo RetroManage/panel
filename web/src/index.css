@@ -15,7 +15,7 @@
     --border: 240 5% 80%;
     --input: 240 6% 91%;
     --input-placeholder: 240 5% 70%;
-    --primary: 216 46% 40%;
+    --primary: 217 34% 42%;
     --primary-foreground: 240 5% 98%;
     --secondary: 240 5% 90%;
     --secondary-foreground: 240 5% 20%;
@@ -23,9 +23,9 @@
     --accent-foreground: 240 5% 20%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --ring: 216 46% 40%;
+    --ring: 217 34% 42%;
     --radius: 0.5rem;
-    --hover-primary: 216 46% 30%;
+    --hover-primary: 217 34% 36%;
     --hover-secondary: 240 5% 85%;
     --hover-destructive: 0 84% 60%;
     --success: 142 76% 36%;
@@ -39,12 +39,12 @@
     --border-muted-40: 210 40% 96%;
     --sidebar-background: 240 5% 90%;
     --sidebar-foreground: 240 5% 20%;
-    --sidebar-primary: 216 46% 40%;
+    --sidebar-primary: 217 34% 42%;
     --sidebar-primary-foreground: 240 5% 98%;
     --sidebar-accent: 240 5% 85%;
     --sidebar-accent-foreground: 240 5% 10%;
     --sidebar-border: 240 5% 80%;
-    --sidebar-ring: 216 46% 40%;
+    --sidebar-ring: 217 34% 42%;
     --sidebar-foreground-70: 240 5% 30%;
     --snow-color: 210 80% 62%;
     --neon-green: 81 96% 55%;
@@ -78,9 +78,9 @@
     --border: 0 0% 18%;
     --input: 240 2% 16.5%;
     --input-placeholder: 0 0 30%;
-    --primary: 216 46% 53%;
+    --primary: 217 32% 58%;
     --primary-foreground: 0 0% 5%;
-    --secondary: 216 46% 53%;
+    --secondary: 217 20% 22%;
     --secondary-foreground: 0 0% 5%;
     --accent: 240 4% 16%;
     --accent-foreground: 0 0% 98%;
@@ -88,8 +88,8 @@
     --destructive-foreground: 210 40% 98%;
     --ring: 215 16% 47%;
     --radius: 0.5rem;
-    --hover-primary: 216 41% 49%;
-    --hover-secondary: 216 41% 49%;
+    --hover-primary: 217 32% 52%;
+    --hover-secondary: 217 20% 26%;
     --hover-destructive: 0 84% 60%;
     --success: 142 76% 36%;
     --hover-success: 142 72% 29%;
@@ -102,7 +102,7 @@
     --border-muted-40: 210 40% 96%;
     --sidebar-background: 240 2% 11%;
     --sidebar-foreground: 0 0 71%;
-    --sidebar-primary: 0 100% 81%;
+    --sidebar-primary: 217 32% 58%;
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: var(--accent);
     --sidebar-accent-foreground: var(--accent-foreground);
@@ -128,8 +128,26 @@
   body {
     @apply bg-background font-body text-foreground;
     overflow-x: hidden; /* Prevent horizontal scroll from drag-and-drop elements */
-    scroll-behavior: smooth; /* Smooth scrolling for better UX */
   }
+  html {
+    scroll-behavior: smooth;
+  }
+
+  * {
+    transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
 
   button:not(:disabled),
   [role='button']:not([aria-disabled='true']) {

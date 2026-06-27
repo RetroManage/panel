@@ -2,7 +2,7 @@
   "name": "retropanel-dashboard",
   "private": true,
   "version": "0.1.0",
-  "description": "RetroPanel accounting dashboard frontend based on the PasarGuard dashboard shell",
+  "description": "RetroPanel accounting dashboard frontend",
   "type": "module",
   "scripts": {
     "dev": "vite dev --host 0.0.0.0",

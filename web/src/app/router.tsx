@@ -11,6 +11,10 @@ const Statistics = lazyWithChunkRecovery(() => import('../pages/_dashboard.stati
 const Panels = lazyWithChunkRecovery(() => import('../pages/_dashboard.panels'))
 const Products = lazyWithChunkRecovery(() => import('../pages/_dashboard.products'))
 const BotSetting = lazyWithChunkRecovery(() => import('../pages/_dashboard.bot-setting'))
+const BotSettingGeneral = lazyWithChunkRecovery(() => import('../pages/_dashboard.bot-setting.general'))
+const BotSettingTexts = lazyWithChunkRecovery(() => import('../pages/_dashboard.bot-setting.texts'))
+const BotSettingButtons = lazyWithChunkRecovery(() => import('../pages/_dashboard.bot-setting.buttons'))
+const BotSettingStatus = lazyWithChunkRecovery(() => import('../pages/_dashboard.bot-setting.status'))
 const Setting = lazyWithChunkRecovery(() => import('../pages/_dashboard.settings'))
 const SettingGeneral = lazyWithChunkRecovery(() => import('../pages/_dashboard.settings.general'))
 const SettingTheme = lazyWithChunkRecovery(() => import('../pages/_dashboard.settings.theme'))
@@ -87,6 +91,41 @@ export const router = createHashRouter([
             <BotSetting />
           </Suspense>
         ),
+        children: [
+          { index: true, element: <Navigate to="/bot-setting/general" replace /> },
+          {
+            path: 'general',
+            element: (
+              <Suspense fallback={<LoadingSpinner />}>
+                <BotSettingGeneral />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'texts',
+            element: (
+              <Suspense fallback={<LoadingSpinner />}>
+                <BotSettingTexts />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'buttons',
+            element: (
+              <Suspense fallback={<LoadingSpinner />}>
+                <BotSettingButtons />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'status',
+            element: (
+              <Suspense fallback={<LoadingSpinner />}>
+                <BotSettingStatus />
+              </Suspense>
+            ),
+          },
+        ],
       },
       {
         path: '/setting',

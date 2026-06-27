@@ -1,34 +1,37 @@
 # RetroPanel
 
-RetroPanel is a Telegram-commerce control panel for PasarGuard. This build replaces the old single-server installation assumption with real PasarGuard REST API connections, live Telegram bot activation, and an English-only bot menu.
+RetroPanel is a compact web control panel for running a Telegram-based sales bot on top of a connected panel API. The project ships as one Go backend, one React/Vite frontend, a local JSON data store, and production scripts for install and update.
 
-## What changed in this release
+The current build focuses on clean operations: verified panel connections, live dashboard statistics, real user lists, Telegram bot activation, and Toman-based pricing/accounting fields.
 
-- Added a **Panels** section above **Products** in the sidebar.
-- Removed the sidebar rail hover line that could overlap text.
-- Added real PasarGuard panel connection management with `Username`, `Password`, and `Base URL`.
-- Added a real **Test Connection** action. The backend logs in to PasarGuard through `POST /api/admin/token` and validates the token through `GET /api/admin`.
-- Added backend support for creating PasarGuard users through `POST /api/user`.
-- Activated Telegram bot settings through the real Telegram Bot API. When the bot is enabled, RetroPanel validates the token and starts long polling.
-- Replaced the bot's default Persian menu with English buttons:
-  - Buy Service / My Services
-  - Trial Subscription / Wallet
-  - Connection Guide / Support
-  - Admin Panel for the configured owner ID
+## What is included
 
-## Supported upstream panel
+- Real panel connection management with base URL, username, password, token validation, and connection status.
+- Live dashboard data sourced from the upstream API instead of seeded placeholder numbers.
+- Real user listing through the connected panel user endpoint.
+- CPU, memory, disk, traffic, online-user and status cards on the dashboard.
+- Telegram bot settings split into clear sections: General, Texts, Buttons, and Visibility.
+- Toman-first money formatting across sales, revenue, pricing, and dashboard cards.
+- A quieter modern UI with softer hover states, reduced glow, and cleaner dashboard layout.
+- `install.sh` for first-time deployment and `update.sh` for safe upgrades with automatic backup.
 
-RetroPanel intentionally supports only PasarGuard. Do not ask users to choose a panel type. Use a PasarGuard base URL such as:
+## Requirements
 
-```text
-https://pg.example.com
-```
+A fresh Ubuntu/Debian server is recommended.
 
-PasarGuard itself exposes a FastAPI REST backend and its repository documents it as a web interface with a fully REST API backend.
+Minimum runtime requirements:
 
-## VPS installation
+- Node.js 20 or newer
+- Go 1.22 or newer
+- Nginx
+- systemd
+- A domain pointed to the server if you want automatic TLS
 
-Run this on a fresh Ubuntu/Debian VPS. Point your domain DNS A record to the VPS before starting.
+The installer can install the required system packages on a clean server.
+
+## Installation
+
+Run as root or with `sudo`:
 
 ```bash
 sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/RetroManage/panel/main/install.sh)"
@@ -36,22 +39,17 @@ sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/RetroManage/panel/m
 
 The installer asks for:
 
-- Domain name
-- Let's Encrypt email, optional
-- Owner admin username
-- Owner admin password
+- Dashboard domain
+- Optional Let's Encrypt email
+- Owner username
+- Owner password
 
-The installer will:
+After installation:
 
-- Install Node.js, Go, Nginx, Certbot, and build tools
-- Clone `https://github.com/RetroManage/panel`
-- Build the React dashboard
-- Build the Go backend
-- Create `/opt/retropanel/.env`
-- Create a system user and systemd service
-- Configure Nginx as a reverse proxy
-- Request and install an HTTPS certificate
-- Start RetroPanel
+```bash
+systemctl status retropanel
+journalctl -u retropanel -f
+```
 
 Default paths:
 
@@ -62,67 +60,81 @@ Env file:    /opt/retropanel/.env
 Service:     retropanel.service
 ```
 
-Useful commands:
+## Update
+
+Use the updater to pull the latest release, rebuild the frontend/backend, keep the existing `.env` and data directory, and create a backup before replacing files.
 
 ```bash
-systemctl status retropanel
-journalctl -u retropanel -f
-systemctl restart retropanel
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/RetroManage/panel/main/update.sh)"
 ```
 
-## Manual local development
-
-### Frontend
+To update from a local checkout instead:
 
 ```bash
-cd web
-npm install
-npm run build
+sudo RETROPANEL_APP_DIR=/opt/retropanel bash ./update.sh
 ```
 
-### Backend
-
-```bash
-cd backend
-go mod tidy
-go build -o ../retropanel ./cmd/retropanel
-```
-
-### Run locally
-
-```bash
-mkdir -p data
-export RETROPANEL_HTTP_ADDR=":8080"
-export RETROPANEL_WEB_DIR="$PWD/web/dist"
-export RETROPANEL_DB_PATH="$PWD/data/retropanel.db"
-export RETROPANEL_ADMIN_USER="admin"
-export RETROPANEL_ADMIN_PASSWORD="ChangeMe123!"
-export RETROPANEL_SESSION_SECRET="dev-secret-change-later"
-./retropanel
-```
-
-Open:
+Backups are written to:
 
 ```text
-http://localhost:8080
+/var/backups/retropanel
 ```
 
-## Environment variables
+## Configuration
 
-```text
-RETROPANEL_HTTP_ADDR=:8080
+Environment values live in `/opt/retropanel/.env`:
+
+```env
+RETROPANEL_HTTP_ADDR=127.0.0.1:8080
 RETROPANEL_APP_DIR=/opt/retropanel
 RETROPANEL_DATA_DIR=/var/lib/retropanel
 RETROPANEL_DB_PATH=/var/lib/retropanel/retropanel.db
 RETROPANEL_WEB_DIR=/opt/retropanel/web/dist
 RETROPANEL_ADMIN_USER=admin
-RETROPANEL_ADMIN_PASSWORD=ChangeMe123!
-RETROPANEL_SESSION_SECRET=replace-with-a-long-random-secret
+RETROPANEL_ADMIN_PASSWORD=change-this
+RETROPANEL_SESSION_SECRET=change-this-long-random-value
 ```
 
-## API endpoints added by RetroPanel
+Restart after manual changes:
+
+```bash
+sudo systemctl restart retropanel
+```
+
+## Panel connection
+
+Open **Panels** in the dashboard and add the upstream panel credentials:
+
+- Base URL
+- Admin username
+- Admin password
+- Optional connection name
+
+The backend tests the connection before saving it. A connected panel is then used for dashboard statistics and user lists.
+
+## Bot settings
+
+Open **Bot Setting**. The sidebar and header tabs expose four sections:
+
+- **General**: activate/pause the Telegram bot, save the bot token, set owner numeric ID, and enable daily reports.
+- **Texts**: edit customer-facing message keys.
+- **Buttons**: edit keyboard rows with pipe-separated buttons.
+- **Visibility**: enable or disable bot actions with `key=true` or `key=false` lines.
+
+The bot starts immediately after a valid token and owner ID are saved while activation is enabled.
+
+## API surface
+
+RetroPanel exposes its own authenticated API for the frontend:
 
 ```text
+GET    /api/dashboard
+GET    /api/sales
+GET    /api/bot/users
+GET    /api/settings/general
+PUT    /api/settings/general
+GET    /api/settings/panel
+PUT    /api/settings/panel
 GET    /api/panels
 POST   /api/panels/test
 POST   /api/panels
@@ -131,6 +143,35 @@ DELETE /api/panels/{id}
 POST   /api/pasarguard/users
 ```
 
-## Telegram bot behavior
+The dashboard bridge reads live upstream data from the connected panel, including users, system stats and user statistics. If the upstream panel is not connected, the frontend shows an empty live state instead of fake business numbers.
 
-After saving a valid bot token and owner numeric ID in **Bot Setting**, RetroPanel starts the bot immediately. The owner receives the extra **Admin Panel** button. The current admin bot section is a placeholder for the next release, while the customer menu, trial creation, and service lookup are connected to the configured PasarGuard panel.
+## Development
+
+Backend:
+
+```bash
+cd backend
+go run ./cmd/retropanel
+```
+
+Frontend:
+
+```bash
+cd web
+npm ci
+npm run dev
+```
+
+Build manually:
+
+```bash
+cd web && npm ci && npm run build
+cd ../backend && go build -trimpath -ldflags "-s -w" -o ../retropanel ./cmd/retropanel
+```
+
+## Operational notes
+
+- Keep `/var/lib/retropanel` backed up. It contains the local data store.
+- Keep `/opt/retropanel/.env` private. It contains the session secret and owner bootstrap values.
+- Use the built-in updater for production upgrades so a rollback backup is created first.
+- Money values in the interface are displayed in Toman.

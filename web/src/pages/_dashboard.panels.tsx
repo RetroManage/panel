@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { type PasarGuardPanel, useCreatePanel, useDeletePanel, usePanels, useTestPanelConnection, useUpdatePanel } from '@/service/api'
+import { type PanelConnection, useCreatePanel, useDeletePanel, usePanels, useTestPanelConnection, useUpdatePanel } from '@/service/api'
 import { useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2, Loader2, PlugZap, Plus, RefreshCw, ServerCog, ShieldCheck, Trash2, XCircle } from 'lucide-react'
 import { FormEvent, useEffect, useMemo, useState } from 'react'
@@ -49,7 +49,7 @@ export default function PanelsPage() {
     }
   }, [open])
 
-  const editPanel = (panel: PasarGuardPanel) => {
+  const editPanel = (panel: PanelConnection) => {
     setForm({
       id: panel.id,
       name: panel.name,
@@ -94,7 +94,7 @@ export default function PanelsPage() {
     }
   }
 
-  const removePanel = async (panel: PasarGuardPanel) => {
+  const removePanel = async (panel: PanelConnection) => {
     try {
       await deletePanel.mutateAsync(panel.id)
       await queryClient.invalidateQueries({ queryKey: ['panels'] })
@@ -109,7 +109,7 @@ export default function PanelsPage() {
   return (
     <div className="flex w-full flex-col items-start gap-2">
       <div className="w-full animate-fade-in transform-gpu" style={{ animationDuration: '420ms' }}>
-        <PageHeader title="Panels" description="Connect RetroPanel to real PasarGuard panels through the official REST API." tutorialUrl="https://github.com/PasarGuard/panel#readme" />
+        <PageHeader title="Panels" description="Connect RetroPanel to real upstream panels through the REST API." />
         <Separator />
       </div>
 
@@ -138,7 +138,7 @@ export default function PanelsPage() {
 
         <Card className="overflow-hidden border-primary/10 bg-card/95 shadow-sm">
           <CardHeader className="border-b bg-muted/25">
-            <CardTitle className="flex items-center gap-2"><PlugZap className="text-primary size-5" /> PasarGuard Connections</CardTitle>
+            <CardTitle className="flex items-center gap-2"><PlugZap className="text-primary size-5" /> Panel Connections</CardTitle>
             <CardDescription>Each saved panel is authenticated with `/api/admin/token` and validated with `/api/admin` before it is stored.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
@@ -157,7 +157,7 @@ export default function PanelsPage() {
                 {isLoading ? (
                   <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">Loading panels...</TableCell></TableRow>
                 ) : panels.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">No PasarGuard panel has been connected yet.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">No panel has been connected yet.</TableCell></TableRow>
                 ) : (
                   panels.map(panel => (
                     <TableRow key={panel.id}>
@@ -192,14 +192,14 @@ export default function PanelsPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>{form.id ? 'Edit PasarGuard Panel' : 'Add PasarGuard Panel'}</DialogTitle>
-            <DialogDescription>RetroPanel supports PasarGuard only. Enter the admin credentials and base URL; the backend performs a real API login test.</DialogDescription>
+            <DialogTitle>{form.id ? 'Edit Panel' : 'Add Panel'}</DialogTitle>
+            <DialogDescription>Enter the admin credentials and base URL; the backend performs a real API login test.</DialogDescription>
           </DialogHeader>
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="panelName">Panel name</Label>
-                <Input id="panelName" value={form.name} onChange={event => setForm(current => ({ ...current, name: event.target.value }))} placeholder="Main PasarGuard" />
+                <Label htmlFor="panelName">Connection name</Label>
+                <Input id="panelName" value={form.name} onChange={event => setForm(current => ({ ...current, name: event.target.value }))} placeholder="Main panel" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="panelUsername">Username</Label>

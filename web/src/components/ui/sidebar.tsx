@@ -296,7 +296,7 @@ const SidebarRail = React.forwardRef<HTMLButtonElement, React.ComponentProps<'bu
           tabIndex={0}
           onClick={toggleSidebar}
           className={cn(
-            'hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 transition-all ease-linear after:absolute after:inset-y-0 after:w-[2px] sm:flex',
+            'absolute inset-y-0 z-20 hidden w-3 transition-none after:absolute after:inset-y-0 after:w-0 sm:flex',
             // Positioning for left side (LTR) or right side (RTL)
             isRTL
               ? 'translate-x-1/2 group-data-[side=left]:right-0 group-data-[side=right]:-left-4 after:right-1/2'
@@ -306,22 +306,22 @@ const SidebarRail = React.forwardRef<HTMLButtonElement, React.ComponentProps<'bu
               ? '[[data-side=left]_&]:cursor-e-resize [[data-side=left][data-state=collapsed]_&]:cursor-w-resize [[data-side=right]_&]:cursor-w-resize [[data-side=right][data-state=collapsed]_&]:cursor-e-resize'
               : '[[data-side=left]_&]:cursor-w-resize [[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize',
             // Offcanvas mode
-            'group-data-[collapsible=offcanvas]:hover:bg-sidebar group-data-[collapsible=offcanvas]:translate-x-0',
+            '',
             isRTL
               ? 'group-data-[collapsible=offcanvas]:after:right-full [[data-side=left][data-collapsible=offcanvas]_&]:-right-2 [[data-side=right][data-collapsible=offcanvas]_&]:-left-2'
               : 'group-data-[collapsible=offcanvas]:after:left-full [[data-side=left][data-collapsible=offcanvas]_&]:-right-2 [[data-side=right][data-collapsible=offcanvas]_&]:-left-2',
             // Icon mode
-            'group-data-[collapsible=icon]:translate-x-0 group-data-[collapsible=icon]:after:w-[1px]',
+            'group-data-[collapsible=icon]:translate-x-0 group-data-[collapsible=icon]:after:w-0',
             isRTL
               ? 'group-data-[collapsible=icon]:after:right-full [[data-side=left][data-collapsible=icon]_&]:right-0 [[data-side=right][data-collapsible=icon]_&]:left-0'
               : 'group-data-[collapsible=icon]:after:left-full [[data-side=left][data-collapsible=icon]_&]:right-0 [[data-side=right][data-collapsible=icon]_&]:left-0',
             // Hover effects
-            'hover:after:bg-sidebar-accent hover:after:w-[4px]',
-            'group-data-[collapsible=icon]:hover:after:w-[2px]',
-            'after:transition-all after:duration-200',
-            'hover:bg-sidebar/5',
+            '',
+            '',
+            '',
+            '',
             'focus-visible:ring-sidebar-ring focus-visible:ring-2 focus-visible:outline-none',
-            'active:bg-sidebar/10',
+            '',
             className,
           )}
           {...props}

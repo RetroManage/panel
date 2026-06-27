@@ -68,7 +68,7 @@ export default function PricingSettingsPage() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <CardTitle>Pricing Rules</CardTitle>
-                <CardDescription>These fields are placeholders wired to the Go backend and local database.</CardDescription>
+                <CardDescription>These values are stored in the backend and used by the sales workflow.</CardDescription>
               </div>
               <Button onClick={save} disabled={!changed || saveMutation.isPending}>
                 <Save className="mr-2 size-4" />
@@ -79,7 +79,7 @@ export default function PricingSettingsPage() {
           <CardContent className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
               <Label>Currency</Label>
-              <Input value={form?.currency || ''} onChange={event => update('currency', event.target.value)} placeholder="IRR" />
+              <Input value={form?.currency || ''} onChange={event => update('currency', event.target.value)} placeholder="Toman" />
             </div>
             <div className="space-y-2">
               <Label>Base Plan Price</Label>

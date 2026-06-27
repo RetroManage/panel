@@ -53,7 +53,7 @@ func (s *Server) session(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, s.store.Dashboard())
+	writeJSON(w, http.StatusOK, s.liveDashboard(r.Context()))
 }
 
 func (s *Server) sales(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +61,12 @@ func (s *Server) sales(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) botUsers(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"items": s.store.BotUsers()})
+	users, err := s.livePanelUsers(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"items": []domain.BotUser{}, "error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": users})
 }
 
 func (s *Server) leaderboard(w http.ResponseWriter, r *http.Request) {

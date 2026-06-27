@@ -7,7 +7,7 @@ export default function SettingPage() {
   return (
     <div className="flex w-full flex-col items-start gap-2">
       <div className="animate-fade-in w-full transform-gpu" style={{ animationDuration: '400ms' }}>
-        <PageHeader title="Setting" description="Panel and Telegram bot settings area." tutorialUrl="https://github.com/PasarGuard/panel#readme" />
+        <PageHeader title="Setting" description="Panel and Telegram bot settings area." />
         <Separator />
       </div>
       <div className="flex w-full px-3 pt-4 sm:px-4">

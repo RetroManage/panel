@@ -13,13 +13,36 @@ type Admin struct {
 }
 
 type DashboardSummary struct {
-	GrossSales       int64   `json:"grossSales"`
-	NetRevenue       int64   `json:"netRevenue"`
-	OpenInvoices     int     `json:"openInvoices"`
-	ConversionRate   float64 `json:"conversionRate"`
-	ActiveAdmins     int     `json:"activeAdmins"`
-	Currency         string  `json:"currency"`
-	LastReconciledAt string  `json:"lastReconciledAt"`
+	GrossSales        int64   `json:"grossSales"`
+	NetRevenue        int64   `json:"netRevenue"`
+	OpenInvoices      int     `json:"openInvoices"`
+	ConversionRate    float64 `json:"conversionRate"`
+	ActiveAdmins      int     `json:"activeAdmins"`
+	Currency          string  `json:"currency"`
+	LastReconciledAt  string  `json:"lastReconciledAt"`
+	TotalUsers        int     `json:"totalUsers"`
+	ActiveUsers       int     `json:"activeUsers"`
+	OnlineUsers       int     `json:"onlineUsers"`
+	LimitedUsers      int     `json:"limitedUsers"`
+	ExpiredUsers      int     `json:"expiredUsers"`
+	DisabledUsers     int     `json:"disabledUsers"`
+	OnHoldUsers       int     `json:"onHoldUsers"`
+	TotalTrafficBytes int64   `json:"totalTrafficBytes"`
+	IncomingBandwidth int64   `json:"incomingBandwidth"`
+	OutgoingBandwidth int64   `json:"outgoingBandwidth"`
+	CPUUsage          float64 `json:"cpuUsage"`
+	CPUCores          int     `json:"cpuCores"`
+	MemoryUsedBytes   int64   `json:"memoryUsedBytes"`
+	MemoryTotalBytes  int64   `json:"memoryTotalBytes"`
+	DiskUsedBytes     int64   `json:"diskUsedBytes"`
+	DiskTotalBytes    int64   `json:"diskTotalBytes"`
+	UptimeSeconds     int64   `json:"uptimeSeconds"`
+	SystemVersion     string  `json:"systemVersion"`
+	PanelStatus       string  `json:"panelStatus"`
+	PanelName         string  `json:"panelName"`
+	Source            string  `json:"source"`
+	RealData          bool    `json:"realData"`
+	Error             string  `json:"error,omitempty"`
 }
 
 type SalesPoint struct {
@@ -28,8 +51,7 @@ type SalesPoint struct {
 	Orders int    `json:"orders"`
 }
 
-// BotUser is intentionally scoped to accounts created by the Telegram sales bot.
-// The panel should never mix manually-created PasarGuard users into this list.
+// BotUser represents a user fetched from the connected upstream panel.
 type BotUser struct {
 	ID            string    `json:"id"`
 	Username      string    `json:"username"`

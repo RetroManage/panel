@@ -9,7 +9,7 @@ import { useDashboardSummary, useSalesStatus } from '@/service/api'
 export default function SalesStatus() {
   const { data: summary } = useDashboardSummary()
   const { data: sales = [] } = useSalesStatus()
-  const currency = summary?.currency || 'IRR'
+  const currency = summary?.currency || 'Toman'
   const totalOrders = sales.reduce((total, item) => total + item.orders, 0)
   const totalAmount = sales.reduce((total, item) => total + item.amount, 0)
   const maxAmount = Math.max(...sales.map(item => item.amount), 1)
@@ -17,7 +17,7 @@ export default function SalesStatus() {
   return (
     <div className="flex w-full flex-col items-start gap-2">
       <div className="animate-fade-in w-full transform-gpu" style={{ animationDuration: '400ms' }}>
-        <PageHeader title="Sales Status" description="A first accounting view for daily sales volume, order count, and settlement status." tutorialUrl="https://github.com/RetroManage/panel#readme" />
+        <PageHeader title="Sales Status" description="Real daily sales volume, order count, and settlement status." tutorialUrl="https://github.com/RetroManage/panel#readme" />
         <Separator />
       </div>
 
@@ -28,14 +28,14 @@ export default function SalesStatus() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <CardTitle>Sales Pipeline</CardTitle>
-                  <CardDescription>Temporary visual report. Real accounting rules will be added next.</CardDescription>
+                  <CardDescription>No placeholder numbers are shown here.</CardDescription>
                 </div>
                 <Badge variant="green">{formatNumber(totalOrders)} orders</Badge>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {sales.map(item => (
+                {sales.length ? sales.map(item => (
                   <div key={item.label} className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium">{item.label}</span>
@@ -45,7 +45,7 @@ export default function SalesStatus() {
                       <div className="bg-primary h-full rounded-full" style={{ width: `${Math.max(5, (item.amount / maxAmount) * 100)}%` }} />
                     </div>
                   </div>
-                ))}
+                )) : <p className="text-muted-foreground py-12 text-center text-sm">No real sales records yet.</p>}
               </div>
             </CardContent>
           </Card>
@@ -53,7 +53,7 @@ export default function SalesStatus() {
           <Card>
             <CardHeader>
               <CardTitle>Settlement Summary</CardTitle>
-              <CardDescription>Current totals from the local data store.</CardDescription>
+              <CardDescription>Current totals in Toman from real accounting records.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between rounded-md border p-3">
@@ -75,7 +75,7 @@ export default function SalesStatus() {
         <Card className="mt-4">
           <CardHeader>
             <CardTitle>Daily Sales Rows</CardTitle>
-            <CardDescription>Placeholder table for sales ledger entries.</CardDescription>
+            <CardDescription>Real sales ledger rows when product payments are recorded.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -96,6 +96,7 @@ export default function SalesStatus() {
                     <TableCell><Badge variant="blue">Recorded</Badge></TableCell>
                   </TableRow>
                 ))}
+                {!sales.length && <TableRow><TableCell colSpan={4} className="text-muted-foreground h-24 text-center">No sales records yet.</TableCell></TableRow>}
               </TableBody>
             </Table>
           </CardContent>
