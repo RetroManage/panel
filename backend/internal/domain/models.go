@@ -51,6 +51,36 @@ type SalesPoint struct {
 	Orders int    `json:"orders"`
 }
 
+// Product is a real sellable plan/item used by the Telegram sales bot and
+// accounting dashboard. Sales and revenue are derived from these records; no
+// seeded or fake dashboard values are generated.
+type Product struct {
+	ID           string    `json:"id"`
+	Name         string    `json:"name"`
+	Description  string    `json:"description"`
+	Price        int64     `json:"price"`
+	Currency     string    `json:"currency"`
+	DataLimitGB  float64   `json:"dataLimitGb"`
+	DurationDays int       `json:"durationDays"`
+	IsActive     bool      `json:"isActive"`
+	SoldCount    int       `json:"soldCount"`
+	Revenue      int64     `json:"revenue"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
+type ProductInput struct {
+	Name         string  `json:"name"`
+	Description  string  `json:"description"`
+	Price        int64   `json:"price"`
+	Currency     string  `json:"currency"`
+	DataLimitGB  float64 `json:"dataLimitGb"`
+	DurationDays int     `json:"durationDays"`
+	IsActive     bool    `json:"isActive"`
+	SoldCount    int     `json:"soldCount"`
+	Revenue      int64   `json:"revenue"`
+}
+
 // BotUser represents a user fetched from the connected upstream panel.
 type BotUser struct {
 	ID            string    `json:"id"`
@@ -151,6 +181,7 @@ type Snapshot struct {
 	Admins      []Admin           `json:"admins"`
 	Dashboard   DashboardSummary  `json:"dashboard"`
 	Sales       []SalesPoint      `json:"sales"`
+	Products    []Product         `json:"products"`
 	BotUsers    []BotUser         `json:"botUsers"`
 	Leaderboard []AdminScore      `json:"leaderboard"`
 	Pricing     PricingSettings   `json:"pricing"`

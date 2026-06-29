@@ -104,7 +104,128 @@ func (s *Store) Dashboard() domain.DashboardSummary {
 func (s *Store) Sales() []domain.SalesPoint {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return append([]domain.SalesPoint(nil), s.data.Sales...)
+	return salesFromProducts(s.data.Products)
+}
+
+func (s *Store) Products() []domain.Product {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	items := make([]domain.Product, 0, len(s.data.Products))
+	items = append(items, s.data.Products...)
+	return items
+}
+
+func (s *Store) SaveProduct(id string, input domain.ProductInput) (domain.Product, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	name := strings.TrimSpace(input.Name)
+	if name == "" {
+		return domain.Product{}, errors.New("product name is required")
+	}
+	if input.Price < 0 {
+		return domain.Product{}, errors.New("product price cannot be negative")
+	}
+	if input.SoldCount < 0 {
+		return domain.Product{}, errors.New("sold count cannot be negative")
+	}
+	currency := strings.TrimSpace(input.Currency)
+	if currency == "" {
+		currency = "Toman"
+	}
+	now := time.Now().UTC()
+
+	for i, product := range s.data.Products {
+		if product.ID != id || id == "" {
+			continue
+		}
+		product.Name = name
+		product.Description = strings.TrimSpace(input.Description)
+		product.Price = input.Price
+		product.Currency = currency
+		product.DataLimitGB = input.DataLimitGB
+		product.DurationDays = input.DurationDays
+		product.IsActive = input.IsActive
+		product.SoldCount = input.SoldCount
+		product.Revenue = input.Revenue
+		product.UpdatedAt = now
+		s.data.Products[i] = product
+		s.data.UpdatedAt = now
+		return product, s.flushLocked()
+	}
+
+	if id != "" {
+		return domain.Product{}, ErrNotFound
+	}
+
+	newID, err := randomID()
+	if err != nil {
+		return domain.Product{}, err
+	}
+	product := domain.Product{
+		ID:           newID,
+		Name:         name,
+		Description:  strings.TrimSpace(input.Description),
+		Price:        input.Price,
+		Currency:     currency,
+		DataLimitGB:  input.DataLimitGB,
+		DurationDays: input.DurationDays,
+		IsActive:     input.IsActive,
+		SoldCount:    input.SoldCount,
+		Revenue:      input.Revenue,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+	s.data.Products = append(s.data.Products, product)
+	s.data.UpdatedAt = now
+	return product, s.flushLocked()
+}
+
+func (s *Store) DeleteProduct(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for i, product := range s.data.Products {
+		if product.ID == id {
+			s.data.Products = append(s.data.Products[:i], s.data.Products[i+1:]...)
+			s.data.UpdatedAt = time.Now().UTC()
+			return s.flushLocked()
+		}
+	}
+	return ErrNotFound
+}
+
+func (s *Store) ProductTotals() (grossSales int64, totalOrders int) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, product := range s.data.Products {
+		revenue := productRevenue(product)
+		grossSales += revenue
+		totalOrders += product.SoldCount
+	}
+	return grossSales, totalOrders
+}
+
+func salesFromProducts(products []domain.Product) []domain.SalesPoint {
+	items := make([]domain.SalesPoint, 0, len(products))
+	for _, product := range products {
+		if product.SoldCount == 0 && productRevenue(product) == 0 {
+			continue
+		}
+		items = append(items, domain.SalesPoint{
+			Label:  product.Name,
+			Amount: productRevenue(product),
+			Orders: product.SoldCount,
+		})
+	}
+	return items
+}
+
+func productRevenue(product domain.Product) int64 {
+	if product.Revenue > 0 {
+		return product.Revenue
+	}
+	return product.Price * int64(product.SoldCount)
 }
 
 func (s *Store) BotUsers() []domain.BotUser {
@@ -449,6 +570,7 @@ func defaultSnapshot() domain.Snapshot {
 			Source:           "local",
 		},
 		Sales:       []domain.SalesPoint{},
+		Products:    []domain.Product{},
 		BotUsers:    []domain.BotUser{},
 		Leaderboard: []domain.AdminScore{},
 		Pricing: domain.PricingSettings{

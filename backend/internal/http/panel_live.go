@@ -54,6 +54,18 @@ func (s *Server) liveDashboard(ctx context.Context) domain.DashboardSummary {
 	summary.Currency = "Toman"
 	summary.LastReconciledAt = time.Now().UTC().Format(time.RFC3339)
 	summary.Source = "upstream"
+	grossSales, _ := s.store.ProductTotals()
+	summary.GrossSales = grossSales
+	summary.OpenInvoices = 0
+	pricing := s.store.Pricing()
+	deductions := (pricing.TaxPct + pricing.CommissionPct) / 100
+	if deductions < 0 {
+		deductions = 0
+	}
+	if deductions > 1 {
+		deductions = 1
+	}
+	summary.NetRevenue = int64(float64(grossSales) * (1 - deductions))
 
 	panel, token, err := s.panelToken(ctx)
 	if err != nil {

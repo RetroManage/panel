@@ -61,6 +61,71 @@ export type SalesPoint = {
   orders: number
 }
 
+export type Product = {
+  id: string
+  name: string
+  description: string
+  price: number
+  currency: string
+  dataLimitGb: number
+  durationDays: number
+  isActive: boolean
+  soldCount: number
+  revenue: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type ProductPayload = {
+  name: string
+  description?: string
+  price: number
+  currency?: string
+  dataLimitGb?: number
+  durationDays?: number
+  isActive?: boolean
+  soldCount?: number
+  revenue?: number
+}
+
+export type SystemResourceStats = {
+  cpu_usage: number
+  cpu_cores: number
+  mem_used: number
+  mem_total: number
+  disk_used: number
+  disk_total: number
+  uptime_seconds: number
+}
+
+export type SystemUsersStats = {
+  total_user: number
+  active_users: number
+  online_users: number
+  limited_users: number
+  expired_users: number
+  disabled_users: number
+  incoming_bandwidth: number
+  outgoing_bandwidth: number
+}
+
+export type PasarGuardUserCreatePayload = {
+  panelId?: string
+  username: string
+  status?: string
+  expire?: string | number | null
+  dataLimitGb?: number
+  dataLimitBytes?: number
+  dataLimitResetStrategy?: string
+  note?: string
+}
+
+export type PasarGuardUserCreateResult = {
+  ok: boolean
+  panel: string
+  user: unknown
+}
+
 export type BotUser = {
   id: string
   username: string
@@ -239,6 +304,56 @@ export const getSalesStatus = async () => {
   const response = await request<{ items: SalesPoint[] }>('/api/sales')
   return response.items
 }
+export const getProducts = async () => {
+  const response = await request<{ items: Product[] }>('/api/products')
+  return response.items
+}
+export const saveProduct = (payload: ProductPayload & { id?: string }) => {
+  const { id, ...body } = payload
+  return request<Product>(id ? `/api/products/${id}` : '/api/products', {
+    method: id ? 'PUT' : 'POST',
+    body: JSON.stringify({ currency: 'Toman', isActive: true, ...body }),
+  })
+}
+export const deleteProduct = (id: string) =>
+  request<{ ok: boolean; items: Product[] }>(`/api/products/${id}`, {
+    method: 'DELETE',
+  })
+
+const dashboardToResourceStats = (summary: DashboardSummary): SystemResourceStats => ({
+  cpu_usage: summary.cpuUsage || 0,
+  cpu_cores: summary.cpuCores || 0,
+  mem_used: summary.memoryUsedBytes || 0,
+  mem_total: summary.memoryTotalBytes || 0,
+  disk_used: summary.diskUsedBytes || 0,
+  disk_total: summary.diskTotalBytes || 0,
+  uptime_seconds: summary.uptimeSeconds || 0,
+})
+
+const dashboardToUsersStats = (summary: DashboardSummary): SystemUsersStats => ({
+  total_user: summary.totalUsers || 0,
+  active_users: summary.activeUsers || 0,
+  online_users: summary.onlineUsers || 0,
+  limited_users: summary.limitedUsers || 0,
+  expired_users: summary.expiredUsers || 0,
+  disabled_users: summary.disabledUsers || 0,
+  incoming_bandwidth: summary.incomingBandwidth || 0,
+  outgoing_bandwidth: summary.outgoingBandwidth || summary.totalTrafficBytes || 0,
+})
+
+export const getSystemResourceStats = async () => dashboardToResourceStats(await getDashboardSummary())
+export const getSystemUsersStats = async () => dashboardToUsersStats(await getDashboardSummary())
+
+export const createPasarGuardUser = (payload: PasarGuardUserCreatePayload) =>
+  request<PasarGuardUserCreateResult>('/api/pasarguard/users', {
+    method: 'POST',
+    body: JSON.stringify({
+      status: 'active',
+      dataLimitResetStrategy: 'no_reset',
+      ...payload,
+      dataLimitGb: payload.dataLimitGb ? Math.round(payload.dataLimitGb) : undefined,
+    }),
+  })
 export const getBotUsers = async () => {
   const response = await request<{ items: BotUser[]; error?: string }>('/api/bot/users')
   return response.items
@@ -307,6 +422,14 @@ export const useAdminToken = (options?: any) =>
 
 export const useDashboardSummary = () => useQuery({ queryKey: ['dashboard-summary'], queryFn: getDashboardSummary })
 export const useSalesStatus = () => useQuery({ queryKey: ['sales-status'], queryFn: getSalesStatus })
+export const useProducts = () => useQuery({ queryKey: ['products'], queryFn: getProducts })
+export const useSaveProduct = () => useMutation({ mutationFn: saveProduct })
+export const useDeleteProduct = () => useMutation({ mutationFn: deleteProduct })
+export const useGetSystemResourceStats = (options?: any) =>
+  useQuery({ queryKey: ['system-resource-stats'], queryFn: getSystemResourceStats, ...(options?.query || {}) })
+export const useGetSystemUsersStats = (_params?: any, options?: any) =>
+  useQuery({ queryKey: ['system-users-stats'], queryFn: getSystemUsersStats, ...(options?.query || {}) })
+export const useCreatePasarGuardUser = () => useMutation({ mutationFn: createPasarGuardUser })
 export const useBotUsers = () => useQuery({ queryKey: ['bot-users'], queryFn: getBotUsers })
 export const useAdminLeaderboard = () => useQuery({ queryKey: ['admin-leaderboard'], queryFn: getAdminLeaderboard })
 export const usePricingSettings = () => useQuery({ queryKey: ['pricing-settings'], queryFn: getPricingSettings })
