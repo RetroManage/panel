@@ -9,15 +9,17 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"retropanel/backend/internal/domain"
 	"retropanel/backend/internal/pasarguard"
 	"retropanel/backend/internal/store"
+
+	tele "gopkg.in/telebot.v4"
 )
 
 type Manager struct {
@@ -27,7 +29,7 @@ type Manager struct {
 	pg     *pasarguard.Client
 
 	mu       sync.Mutex
-	cancel   context.CancelFunc
+	bot      *tele.Bot
 	settings domain.PanelSettings
 	running  bool
 }
@@ -36,31 +38,6 @@ type apiResponse struct {
 	OK          bool            `json:"ok"`
 	Description string          `json:"description"`
 	Result      json.RawMessage `json:"result"`
-}
-
-type update struct {
-	UpdateID int64    `json:"update_id"`
-	Message  *message `json:"message"`
-}
-
-type message struct {
-	MessageID int64  `json:"message_id"`
-	Chat      chat   `json:"chat"`
-	From      *user  `json:"from"`
-	Text      string `json:"text"`
-}
-
-type chat struct {
-	ID        int64  `json:"id"`
-	Type      string `json:"type"`
-	FirstName string `json:"first_name"`
-	Username  string `json:"username"`
-}
-
-type user struct {
-	ID        int64  `json:"id"`
-	FirstName string `json:"first_name"`
-	Username  string `json:"username"`
 }
 
 func NewManager(db *store.Store, logger *slog.Logger, pg *pasarguard.Client) *Manager {
@@ -119,12 +96,23 @@ func (m *Manager) Apply(settings domain.PanelSettings) error {
 		m.settings = settings
 		return nil
 	}
+
 	m.stopLocked()
-	ctx, cancel := context.WithCancel(context.Background())
-	m.cancel = cancel
+	bot, err := m.newBot(settings.TelegramBotToken)
+	if err != nil {
+		return err
+	}
+	m.registerHandlers(bot)
+	m.bot = bot
 	m.settings = settings
 	m.running = true
-	go m.run(ctx, settings.TelegramBotToken)
+
+	go func() {
+		m.logger.Info("telegram bot polling started")
+		bot.Start()
+		m.logger.Info("telegram bot polling stopped")
+	}()
+
 	return nil
 }
 
@@ -135,43 +123,29 @@ func (m *Manager) Stop() {
 }
 
 func (m *Manager) stopLocked() {
-	if m.cancel != nil {
-		m.cancel()
-		m.cancel = nil
+	if m.bot != nil {
+		m.bot.Stop()
+		m.bot = nil
 	}
 	m.running = false
 }
 
-func (m *Manager) run(ctx context.Context, token string) {
-	m.logger.Info("telegram bot polling started")
-	defer m.logger.Info("telegram bot polling stopped")
+func (m *Manager) newBot(token string) (*tele.Bot, error) {
+	return tele.NewBot(tele.Settings{
+		Token:  strings.TrimSpace(token),
+		Client: m.client,
+		Poller: &tele.LongPoller{Timeout: 30 * time.Second},
+	})
+}
 
-	var offset int64
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
+func (m *Manager) registerHandlers(bot *tele.Bot) {
+	bot.Handle(tele.OnText, func(c tele.Context) error {
+		if err := m.handleMessage(c); err != nil {
+			m.logger.Warn("telegram message handler failed", "error", err)
+			return err
 		}
-		updates, err := m.getUpdates(ctx, token, offset)
-		if err != nil {
-			m.logger.Warn("telegram getUpdates failed", "error", err)
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(5 * time.Second):
-			}
-			continue
-		}
-		for _, item := range updates {
-			if item.UpdateID >= offset {
-				offset = item.UpdateID + 1
-			}
-			if item.Message != nil {
-				m.handleMessage(ctx, token, *item.Message)
-			}
-		}
-	}
+		return nil
+	})
 }
 
 func (m *Manager) clearWebhook(ctx context.Context, token string) error {
@@ -179,81 +153,56 @@ func (m *Manager) clearWebhook(ctx context.Context, token string) error {
 	return m.call(ctx, token, "deleteWebhook", payload, nil)
 }
 
-func (m *Manager) getUpdates(ctx context.Context, token string, offset int64) ([]update, error) {
-	values := url.Values{}
-	values.Set("timeout", "30")
-	if offset > 0 {
-		values.Set("offset", strconv.FormatInt(offset, 10))
+func (m *Manager) handleMessage(c tele.Context) error {
+	chat := c.Chat()
+	if chat == nil {
+		return nil
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint(token, "getUpdates")+"?"+values.Encode(), nil)
-	if err != nil {
-		return nil, err
-	}
-	res, err := m.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	raw, _ := io.ReadAll(io.LimitReader(res.Body, 2<<20))
-	var decoded apiResponse
-	if err := json.Unmarshal(raw, &decoded); err != nil {
-		return nil, err
-	}
-	if !decoded.OK {
-		return nil, errors.New(decoded.Description)
-	}
-	var updates []update
-	if err := json.Unmarshal(decoded.Result, &updates); err != nil {
-		return nil, err
-	}
-	return updates, nil
-}
-
-func (m *Manager) handleMessage(ctx context.Context, token string, msg message) {
-	text := strings.TrimSpace(msg.Text)
-	chatID := msg.Chat.ID
+	text := strings.TrimSpace(c.Text())
 	settings := m.snapshotSettings()
+	action := canonicalButtonKey(text)
 
-	switch strings.ToLower(text) {
-	case "/start", "start", "menu", "":
-		m.sendMenu(ctx, token, chatID, textValue(settings, "welcome", "Welcome to RetroPanel. Choose an option:"), settings)
-	case "trial subscription":
-		m.createTrial(ctx, token, msg, settings)
-	case "my services":
-		m.showService(ctx, token, msg, settings)
-	case "buy service":
-		m.sendMenu(ctx, token, chatID, textValue(settings, "plans", "Product purchase is ready for the next release. Contact support to complete your order."), settings)
-	case "wallet":
-		m.sendMenu(ctx, token, chatID, textValue(settings, "wallet", "Wallet balance will be shown here."), settings)
-	case "connection guide":
-		m.sendMenu(ctx, token, chatID, textValue(settings, "connection", "Open your service details to receive the connection guide."), settings)
-	case "support":
-		m.sendMenu(ctx, token, chatID, textValue(settings, "support", "Support will contact you soon."), settings)
-	case "admin panel":
-		if isOwner(settings, chatID) {
-			m.sendMenu(ctx, token, chatID, "Admin Panel\nUsers, orders, broadcasts, payments, and panel actions are reserved for the next admin-bot release.", settings)
-		} else {
-			m.sendMenu(ctx, token, chatID, "This section is available only for the bot owner.", settings)
+	switch {
+	case text == "" || text == "/start" || strings.EqualFold(text, "start") || strings.EqualFold(text, "menu"):
+		return m.sendMenu(c, textValue(settings, "welcome", "Welcome to RetroPanel. Choose an option:"), settings)
+	case action == "trial":
+		return m.createTrial(c, settings)
+	case action == "services":
+		return m.showService(c, settings)
+	case action == "buy":
+		return m.sendMenu(c, textValue(settings, "plans", "Product purchase is ready for the next release. Contact support to complete your order."), settings)
+	case action == "wallet":
+		return m.sendMenu(c, textValue(settings, "wallet", "Wallet balance will be shown here."), settings)
+	case action == "connection":
+		return m.sendMenu(c, textValue(settings, "connection", "Open your service details to receive the connection guide."), settings)
+	case action == "support":
+		return m.sendMenu(c, textValue(settings, "support", "Support will contact you soon."), settings)
+	case action == "admin_panel":
+		if isOwner(settings, chat.ID) {
+			return m.sendMenu(c, "Admin Panel\nUsers, orders, broadcasts, payments, and panel actions are reserved for the next admin-bot release.", settings)
 		}
+		return m.sendMenu(c, "This section is available only for the bot owner.", settings)
 	default:
-		m.sendMenu(ctx, token, chatID, "Command not recognized. Choose an option from the menu.", settings)
+		return m.sendMenu(c, "Command not recognized. Choose an option from the menu.", settings)
 	}
 }
 
-func (m *Manager) createTrial(ctx context.Context, token string, msg message, settings domain.PanelSettings) {
+func (m *Manager) createTrial(c tele.Context, settings domain.PanelSettings) error {
+	chat := c.Chat()
+	if chat == nil {
+		return nil
+	}
 	panel, ok := m.store.ActivePanel()
 	if !ok || panel.Password == "" {
-		m.sendMenu(ctx, token, msg.Chat.ID, "No connected PasarGuard panel is configured yet.", settings)
-		return
+		return m.sendMenu(c, "No connected PasarGuard panel is configured yet.", settings)
 	}
-	username := fmt.Sprintf("tg_%d", msg.Chat.ID)
+	username := fmt.Sprintf("tg_%d", chat.ID)
 	expiresAt := time.Now().UTC().Add(24 * time.Hour)
-	pgToken, err := m.pg.Login(ctx, pasarguard.Credentials{BaseURL: panel.BaseURL, Username: panel.Username, Password: panel.Password})
+	pgToken, err := m.pg.Login(context.Background(), pasarguard.Credentials{BaseURL: panel.BaseURL, Username: panel.Username, Password: panel.Password})
 	if err != nil {
-		m.sendMenu(ctx, token, msg.Chat.ID, "PasarGuard login failed: "+err.Error(), settings)
-		return
+		return m.sendMenu(c, "PasarGuard login failed: "+err.Error(), settings)
 	}
-	_, err = m.pg.CreateUser(ctx, panel.BaseURL, pgToken.AccessToken, pasarguard.CreateUserPayload{
+	_, err = m.pg.CreateUser(context.Background(), panel.BaseURL, pgToken.AccessToken, pasarguard.CreateUserPayload{
 		Username:               username,
 		Status:                 "active",
 		Expire:                 expiresAt.Format(time.RFC3339),
@@ -263,57 +212,69 @@ func (m *Manager) createTrial(ctx context.Context, token string, msg message, se
 	})
 	if err != nil {
 		if strings.Contains(err.Error(), "409") || strings.Contains(strings.ToLower(err.Error()), "already") {
-			m.sendMenu(ctx, token, msg.Chat.ID, "Your trial account already exists. Use My Services to view it.", settings)
-			return
+			return m.sendMenu(c, "Your trial account already exists. Use My Services to view it.", settings)
 		}
-		m.sendMenu(ctx, token, msg.Chat.ID, "Could not create trial user: "+err.Error(), settings)
-		return
+		return m.sendMenu(c, "Could not create trial user: "+err.Error(), settings)
 	}
-	_ = m.store.MarkBotUser(username, strconv.FormatInt(msg.Chat.ID, 10), "24H Trial", "active", 1, expiresAt)
-	m.sendMenu(ctx, token, msg.Chat.ID, "Trial subscription created successfully. Username: "+username, settings)
+	_ = m.store.MarkBotUser(username, strconv.FormatInt(chat.ID, 10), "24H Trial", "active", 1, expiresAt)
+	return m.sendMenu(c, "Trial subscription created successfully. Username: "+username, settings)
 }
 
-func (m *Manager) showService(ctx context.Context, token string, msg message, settings domain.PanelSettings) {
+func (m *Manager) showService(c tele.Context, settings domain.PanelSettings) error {
+	chat := c.Chat()
+	if chat == nil {
+		return nil
+	}
 	panel, ok := m.store.ActivePanel()
 	if !ok || panel.Password == "" {
-		m.sendMenu(ctx, token, msg.Chat.ID, "No connected PasarGuard panel is configured yet.", settings)
-		return
+		return m.sendMenu(c, "No connected PasarGuard panel is configured yet.", settings)
 	}
-	username := fmt.Sprintf("tg_%d", msg.Chat.ID)
-	pgToken, err := m.pg.Login(ctx, pasarguard.Credentials{BaseURL: panel.BaseURL, Username: panel.Username, Password: panel.Password})
+	username := fmt.Sprintf("tg_%d", chat.ID)
+	pgToken, err := m.pg.Login(context.Background(), pasarguard.Credentials{BaseURL: panel.BaseURL, Username: panel.Username, Password: panel.Password})
 	if err != nil {
-		m.sendMenu(ctx, token, msg.Chat.ID, "PasarGuard login failed: "+err.Error(), settings)
-		return
+		return m.sendMenu(c, "PasarGuard login failed: "+err.Error(), settings)
 	}
-	user, err := m.pg.GetUser(ctx, panel.BaseURL, pgToken.AccessToken, username)
+	user, err := m.pg.GetUser(context.Background(), panel.BaseURL, pgToken.AccessToken, username)
 	if err != nil {
-		m.sendMenu(ctx, token, msg.Chat.ID, "No service was found for this Telegram account. Use Trial Subscription first.", settings)
-		return
+		return m.sendMenu(c, "No service was found for this Telegram account. Use Trial Subscription first.", settings)
 	}
 	status := fmt.Sprint(user["status"])
 	expire := fmt.Sprint(user["expire"])
 	dataLimit := fmt.Sprint(user["data_limit"])
 	message := fmt.Sprintf("Your service\nUsername: %s\nStatus: %s\nExpire: %s\nData limit: %s bytes", username, status, expire, dataLimit)
-	m.sendMenu(ctx, token, msg.Chat.ID, message, settings)
+	return m.sendMenu(c, message, settings)
 }
 
-func (m *Manager) sendMenu(ctx context.Context, token string, chatID int64, text string, settings domain.PanelSettings) {
-	rows := keyboardRows(settings)
+func (m *Manager) sendMenu(c tele.Context, text string, settings domain.PanelSettings) error {
+	chat := c.Chat()
+	if chat == nil {
+		return nil
+	}
+	markup := m.keyboardMarkup(settings, chat.ID)
+	return c.Send(text, markup)
+}
+
+func (m *Manager) keyboardMarkup(settings domain.PanelSettings, chatID int64) *tele.ReplyMarkup {
+	markup := &tele.ReplyMarkup{
+		ResizeKeyboard:  true,
+		OneTimeKeyboard: false,
+	}
+	labels := keyboardRows(settings)
 	if isOwner(settings, chatID) && statusEnabled(settings, "admin_panel") {
-		rows = append(rows, []map[string]string{{"text": "Admin Panel"}})
+		labels = append(labels, []string{"Admin Panel"})
 	}
-	payload := map[string]any{
-		"chat_id": chatID,
-		"text":    text,
-		"reply_markup": map[string]any{
-			"keyboard":          rows,
-			"resize_keyboard":   true,
-			"one_time_keyboard": false,
-		},
+	rows := make([]tele.Row, 0, len(labels))
+	for _, rowLabels := range labels {
+		buttons := make([]tele.Btn, 0, len(rowLabels))
+		for _, label := range rowLabels {
+			buttons = append(buttons, markup.Text(label))
+		}
+		if len(buttons) > 0 {
+			rows = append(rows, markup.Row(buttons...))
+		}
 	}
-	if err := m.call(ctx, token, "sendMessage", payload, nil); err != nil {
-		m.logger.Warn("telegram sendMessage failed", "error", err)
-	}
+	markup.Reply(rows...)
+	return markup
 }
 
 func (m *Manager) call(ctx context.Context, token, method string, payload any, out any) error {
@@ -355,18 +316,18 @@ func endpoint(token, method string) string {
 	return "https://api.telegram.org/bot" + strings.TrimSpace(token) + "/" + method
 }
 
-func keyboardRows(settings domain.PanelSettings) [][]map[string]string {
+func keyboardRows(settings domain.PanelSettings) [][]string {
 	layout := strings.TrimSpace(settings.BotButtons)
 	if layout == "" {
 		layout = "Buy Service | My Services\nTrial Subscription | Wallet\nConnection Guide | Support"
 	}
-	rows := [][]map[string]string{}
+	rows := [][]string{}
 	for _, line := range strings.Split(layout, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
 		}
-		row := []map[string]string{}
+		row := []string{}
 		for _, label := range strings.Split(line, "|") {
 			label = strings.TrimSpace(label)
 			if label == "" {
@@ -375,7 +336,7 @@ func keyboardRows(settings domain.PanelSettings) [][]map[string]string {
 			if !buttonLabelEnabled(settings, label) {
 				continue
 			}
-			row = append(row, map[string]string{"text": label})
+			row = append(row, label)
 		}
 		if len(row) > 0 {
 			rows = append(rows, row)
@@ -385,20 +346,53 @@ func keyboardRows(settings domain.PanelSettings) [][]map[string]string {
 }
 
 func buttonLabelEnabled(settings domain.PanelSettings, label string) bool {
-	key := strings.ToLower(strings.ReplaceAll(label, " ", "_"))
-	key = strings.ReplaceAll(key, "subscription", "")
-	key = strings.Trim(key, "_")
-	switch label {
-	case "Buy Service":
-		key = "buy"
-	case "My Services":
-		key = "services"
-	case "Trial Subscription":
-		key = "trial"
-	case "Connection Guide":
-		key = "connection"
+	key := canonicalButtonKey(label)
+	if key == "" {
+		return true
 	}
 	return statusEnabled(settings, key)
+}
+
+func canonicalButtonKey(label string) string {
+	key := normalizeKey(label)
+	switch {
+	case key == "start" || key == "menu":
+		return key
+	case strings.Contains(key, "buy"):
+		return "buy"
+	case strings.Contains(key, "my_service") || key == "services" || key == "service":
+		return "services"
+	case strings.Contains(key, "trial"):
+		return "trial"
+	case strings.Contains(key, "wallet"):
+		return "wallet"
+	case strings.Contains(key, "connection"):
+		return "connection"
+	case strings.Contains(key, "support"):
+		return "support"
+	case strings.Contains(key, "admin") && strings.Contains(key, "panel"):
+		return "admin_panel"
+	default:
+		return key
+	}
+}
+
+func normalizeKey(input string) string {
+	input = strings.ToLower(strings.TrimSpace(input))
+	var builder strings.Builder
+	lastUnderscore := false
+	for _, r := range input {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			builder.WriteRune(r)
+			lastUnderscore = false
+			continue
+		}
+		if !lastUnderscore {
+			builder.WriteByte('_')
+			lastUnderscore = true
+		}
+	}
+	return strings.Trim(builder.String(), "_")
 }
 
 func statusEnabled(settings domain.PanelSettings, key string) bool {
@@ -407,7 +401,7 @@ func statusEnabled(settings domain.PanelSettings, key string) bool {
 	if !ok {
 		return true
 	}
-	return strings.EqualFold(value, "true") || strings.EqualFold(value, "on") || value == "1"
+	return strings.EqualFold(value, "true") || strings.EqualFold(value, "on") || value == "1" || strings.EqualFold(value, "yes")
 }
 
 func textValue(settings domain.PanelSettings, key, fallback string) string {

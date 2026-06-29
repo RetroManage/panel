@@ -21,7 +21,8 @@ fi
 
 command -v rsync >/dev/null 2>&1 || fail "rsync is required"
 command -v npm >/dev/null 2>&1 || fail "npm is required"
-command -v go >/dev/null 2>&1 || fail "Go is required"
+command -v go >/dev/null 2>&1 || fail "Go 1.26 is required"
+go version | grep -Eq 'go1\.26' || fail "Go 1.26 is required"
 
 [[ -d "${APP_DIR}" ]] || fail "Application directory not found: ${APP_DIR}"
 [[ -f "${APP_DIR}/.env" ]] || fail "Environment file not found: ${APP_DIR}/.env"

@@ -2,6 +2,7 @@ import PageHeader from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { CountUp } from '@/components/ui/count-up'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,6 +11,8 @@ import { Separator } from '@/components/ui/separator'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { formatNumber } from '@/features/accounting/format'
+import useDirDetection from '@/hooks/use-dir-detection'
+import { cn } from '@/lib/utils'
 import { BotUser, useBotUsers, useCreatePasarGuardUser, useDashboardSummary, useProducts } from '@/service/api'
 import { useQueryClient } from '@tanstack/react-query'
 import { Activity, HardDrive, Plus, RefreshCcw, Search, UserCheck, Users as UsersIcon, Wifi, type LucideIcon } from 'lucide-react'
@@ -43,25 +46,26 @@ const statusVariant = (status?: string): 'green' | 'orange' | 'yellow' | 'red' |
   }
 }
 
-const StatCard = ({ title, value, helper, icon: Icon, delay }: { title: string; value: string | number; helper?: string; icon: LucideIcon; delay: string }) => (
-  <div className="animate-fade-in w-full" style={{ animationDuration: '600ms', animationDelay: delay }}>
-    <Card className="group relative w-full overflow-hidden rounded-md px-4 py-6 transition-all duration-500">
-      <div className="from-primary/10 absolute inset-0 bg-gradient-to-r to-transparent opacity-0 transition-opacity duration-500 dark:from-primary/5 group-hover:opacity-100" />
-      <CardTitle className="relative z-10 flex min-w-0 items-center justify-between gap-x-4 overflow-hidden">
-        <div className="flex min-h-8 min-w-0 flex-1 items-center gap-x-4 overflow-hidden">
-          <Icon className="h-5 w-5 shrink-0" />
-          <div className="min-w-0">
-            <span className="block truncate">{title}</span>
-            {helper && <span className="text-muted-foreground block truncate text-xs font-normal">{helper}</span>}
+const StatCard = ({ title, value, icon: Icon, dot, delay }: { title: string; value: number; icon?: LucideIcon; dot?: boolean; delay: string }) => {
+  const dir = useDirDetection()
+
+  return (
+    <div className="animate-fade-in w-full" style={{ animationDuration: '600ms', animationDelay: delay }}>
+      <Card dir={dir} className="group relative w-full overflow-hidden rounded-md px-4 py-6 transition-all duration-500">
+        <div className="from-primary/10 absolute inset-0 bg-gradient-to-r to-transparent opacity-0 transition-opacity duration-500 dark:from-primary/5 group-hover:opacity-100" />
+        <CardTitle className="relative z-10 flex min-w-0 items-center justify-between gap-x-4 overflow-hidden">
+          <div className="flex min-h-8 min-w-0 flex-1 items-center gap-x-4 overflow-hidden">
+            {dot ? <div className="min-h-[10px] min-w-[10px] shrink-0 rounded-full bg-green-500 shadow-sm" /> : Icon ? <Icon className="h-5 w-5 shrink-0" /> : null}
+            <span>{title}</span>
           </div>
-        </div>
-        <span dir="ltr" className="mx-2 shrink-0 text-3xl transition-all duration-500">
-          {value}
-        </span>
-      </CardTitle>
-    </Card>
-  </div>
-)
+          <span dir="ltr" className="mx-2 shrink-0 text-3xl transition-all duration-500">
+            <CountUp end={value} />
+          </span>
+        </CardTitle>
+      </Card>
+    </div>
+  )
+}
 
 type UserFormState = {
   username: string
@@ -80,6 +84,7 @@ const emptyUserForm: UserFormState = {
 }
 
 export default function UsersPage() {
+  const dir = useDirDetection()
   const queryClient = useQueryClient()
   const { data: users = [] } = useBotUsers()
   const { data: summary } = useDashboardSummary()
@@ -127,6 +132,11 @@ export default function UsersPage() {
     }))
   }
 
+  const handleCreate = () => {
+    setForm(emptyUserForm)
+    setOpen(true)
+  }
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const durationDays = Number(form.durationDays || selectedProduct?.durationDays || 0)
@@ -154,16 +164,16 @@ export default function UsersPage() {
   return (
     <div className="flex w-full flex-col items-start gap-2">
       <div className="animate-fade-in w-full transform-gpu" style={{ animationDuration: '400ms' }}>
-        <PageHeader title="users" description="manageAccounts" buttonIcon={Plus} buttonText="createUser" onButtonClick={() => setOpen(true)} />
+        <PageHeader title="users" description="manageAccounts" buttonIcon={Plus} buttonText="createUser" onButtonClick={handleCreate} />
         <Separator />
       </div>
 
       <div className="w-full px-4 pt-2 pb-12">
         <div className="animate-slide-up transform-gpu" style={{ animationDuration: '500ms', animationDelay: '100ms', animationFillMode: 'both' }}>
-          <div className="grid w-full auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-            <StatCard title="Online Users" value={formatNumber(totals.online)} helper="Real upstream status" icon={Wifi} delay="50ms" />
-            <StatCard title="Active Users" value={formatNumber(totals.active)} helper={`${formatNumber(totals.limited)} limited`} icon={UserCheck} delay="150ms" />
-            <StatCard title="Users" value={formatNumber(totals.total)} helper={`${formatNumber(totals.expired)} expired · ${formatNumber(totals.disabled)} disabled`} icon={UsersIcon} delay="250ms" />
+          <div className={cn('grid w-full auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3', dir === 'rtl' && 'lg:grid-flow-col-reverse')}>
+            <StatCard title="Online Users" value={totals.online} dot delay="50ms" />
+            <StatCard title="Active Users" value={totals.active} icon={UserCheck} delay="150ms" />
+            <StatCard title="Users" value={totals.total} icon={UsersIcon} delay="250ms" />
           </div>
         </div>
 
@@ -180,8 +190,9 @@ export default function UsersPage() {
                     <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                     <Input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search users" className="pl-9" />
                   </div>
-                  <Button variant="outline" onClick={refresh} className="gap-2"><RefreshCcw className="h-4 w-4" /> Refresh</Button>
-                  <Button onClick={() => setOpen(true)} className="gap-2"><Plus className="h-4 w-4" /> Create User</Button>
+                  <Button variant="outline" onClick={refresh} className="gap-2">
+                    <RefreshCcw className="h-4 w-4" /> Refresh
+                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -212,7 +223,9 @@ export default function UsersPage() {
                         <TableCell>
                           <div className="min-w-40 space-y-1">
                             <div className="flex items-center justify-between text-xs">
-                              <span>{user.usedTrafficGb.toFixed(1)} / {user.dataLimitGb ? user.dataLimitGb.toFixed(0) : '∞'} GB</span>
+                              <span>
+                                {user.usedTrafficGb.toFixed(1)} / {user.dataLimitGb ? user.dataLimitGb.toFixed(0) : '∞'} GB
+                              </span>
                               <span className="text-muted-foreground">{percent}%</span>
                             </div>
                             <div className="bg-muted h-2 overflow-hidden rounded-full">
@@ -222,7 +235,9 @@ export default function UsersPage() {
                         </TableCell>
                         <TableCell>{formatDate(user.createdAt)}</TableCell>
                         <TableCell>{formatDate(user.expiresAt)}</TableCell>
-                        <TableCell><Badge variant={statusVariant(user.status)}>{user.status || 'unknown'}</Badge></TableCell>
+                        <TableCell>
+                          <Badge variant={statusVariant(user.status)}>{user.status || 'unknown'}</Badge>
+                        </TableCell>
                       </TableRow>
                     )
                   })}
@@ -253,7 +268,9 @@ export default function UsersPage() {
             <CardContent className="flex items-center justify-between p-5">
               <div>
                 <p className="text-muted-foreground text-sm">Status Breakdown</p>
-                <p className="text-sm">Limited {formatNumber(totals.limited)} · Expired {formatNumber(totals.expired)} · Disabled {formatNumber(totals.disabled)}</p>
+                <p className="text-sm">
+                  Limited {formatNumber(totals.limited)} · Expired {formatNumber(totals.expired)} · Disabled {formatNumber(totals.disabled)}
+                </p>
               </div>
               <Activity className="text-primary h-6 w-6" />
             </CardContent>
@@ -275,11 +292,17 @@ export default function UsersPage() {
             <div className="space-y-2">
               <Label>Product</Label>
               <Select value={form.productId} onValueChange={handleProductChange}>
-                <SelectTrigger><SelectValue placeholder="Select a product" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a product" />
+                </SelectTrigger>
                 <SelectContent>
-                  {products.filter(product => product.isActive).map(product => (
-                    <SelectItem key={product.id} value={product.id}>{product.name} · {product.dataLimitGb || 0} GB · {product.durationDays || 0} days</SelectItem>
-                  ))}
+                  {products
+                    .filter(product => product.isActive)
+                    .map(product => (
+                      <SelectItem key={product.id} value={product.id}>
+                        {product.name} · {product.dataLimitGb || 0} GB · {product.durationDays || 0} days
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -298,8 +321,12 @@ export default function UsersPage() {
               <Textarea value={form.note} onChange={event => setForm(prev => ({ ...prev, note: event.target.value }))} placeholder="Optional note" />
             </div>
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={createUser.isPending}>{createUser.isPending ? 'Creating...' : 'Create User'}</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createUser.isPending}>
+                {createUser.isPending ? 'Creating...' : 'Create User'}
+              </Button>
             </div>
           </form>
         </DialogContent>

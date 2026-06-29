@@ -2,6 +2,7 @@ import PageHeader from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { CountUp } from '@/components/ui/count-up'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,8 +12,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { formatMoney, formatNumber } from '@/features/accounting/format'
 import { Product, ProductPayload, useDeleteProduct, useProducts, useSaveProduct } from '@/service/api'
 import { useQueryClient } from '@tanstack/react-query'
-import { Edit3, Package, Plus, Trash2 } from 'lucide-react'
-import { FormEvent, useMemo, useState } from 'react'
+import { BadgeCheck, Edit3, Package, Plus, ReceiptText, Trash2, type LucideIcon } from 'lucide-react'
+import { FormEvent, ReactNode, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 type ProductFormState = {
@@ -62,6 +63,23 @@ const toPayload = (form: ProductFormState): ProductPayload & { id?: string } => 
   revenue: Number(form.revenue || 0),
   isActive: form.isActive,
 })
+
+const ProductStatCard = ({ title, value, icon: Icon, delay }: { title: string; value: ReactNode; icon: LucideIcon; delay: string }) => (
+  <div className="animate-fade-in w-full" style={{ animationDuration: '600ms', animationDelay: delay }}>
+    <Card className="group relative w-full overflow-hidden rounded-md px-4 py-6 transition-all duration-500">
+      <div className="from-primary/10 absolute inset-0 bg-gradient-to-r to-transparent opacity-0 transition-opacity duration-500 dark:from-primary/5 group-hover:opacity-100" />
+      <CardTitle className="relative z-10 flex min-w-0 items-center justify-between gap-x-4 overflow-hidden">
+        <div className="flex min-h-8 min-w-0 flex-1 items-center gap-x-4 overflow-hidden">
+          <Icon className="h-5 w-5 shrink-0" />
+          <span>{title}</span>
+        </div>
+        <span dir="ltr" className="mx-2 shrink-0 text-3xl transition-all duration-500">
+          {value}
+        </span>
+      </CardTitle>
+    </Card>
+  </div>
+)
 
 export default function ProductsPage() {
   const queryClient = useQueryClient()
@@ -127,35 +145,10 @@ export default function ProductsPage() {
       </div>
 
       <div className="w-full px-3 pt-4 pb-12 sm:px-4">
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="group relative overflow-hidden rounded-lg border transition-all duration-300 hover:shadow-lg">
-            <div className="from-primary/10 absolute inset-0 bg-gradient-to-r to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-            <CardContent className="relative z-10 flex items-center justify-between p-5">
-              <div>
-                <p className="text-muted-foreground text-sm">Products</p>
-                <p className="text-3xl font-semibold">{formatNumber(products.length)}</p>
-              </div>
-              <Package className="text-primary h-7 w-7" />
-            </CardContent>
-          </Card>
-          <Card className="group relative overflow-hidden rounded-lg border transition-all duration-300 hover:shadow-lg">
-            <div className="from-primary/10 absolute inset-0 bg-gradient-to-r to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-            <CardContent className="relative z-10 flex items-center justify-between p-5">
-              <div>
-                <p className="text-muted-foreground text-sm">Active Products</p>
-                <p className="text-3xl font-semibold">{formatNumber(totals.active)}</p>
-              </div>
-              <Badge variant="green">Live</Badge>
-            </CardContent>
-          </Card>
-          <Card className="group relative overflow-hidden rounded-lg border transition-all duration-300 hover:shadow-lg">
-            <div className="from-primary/10 absolute inset-0 bg-gradient-to-r to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-            <CardContent className="relative z-10 p-5">
-              <p className="text-muted-foreground text-sm">Recorded Revenue</p>
-              <p className="text-2xl font-semibold">{formatMoney(totals.revenue, 'Toman')}</p>
-              <p className="text-muted-foreground mt-1 text-xs">{formatNumber(totals.orders)} product orders</p>
-            </CardContent>
-          </Card>
+        <div className="grid w-full auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+          <ProductStatCard title="Products" value={<CountUp end={products.length} />} icon={Package} delay="50ms" />
+          <ProductStatCard title="Active Products" value={<CountUp end={totals.active} />} icon={BadgeCheck} delay="150ms" />
+          <ProductStatCard title="Recorded Revenue" value={<span className="text-2xl">{formatMoney(totals.revenue, 'Toman')}</span>} icon={ReceiptText} delay="250ms" />
         </div>
 
         <Card className="mt-4 overflow-hidden border-primary/10 bg-card/95 shadow-sm">
@@ -163,9 +156,9 @@ export default function ProductsPage() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle>Product Catalog</CardTitle>
-                <CardDescription>Dashboard sales and revenue are calculated from these product records only.</CardDescription>
+                <CardDescription>Dashboard sales and revenue are calculated from product records only.</CardDescription>
               </div>
-              <Button onClick={handleCreate} className="gap-2"><Plus className="h-4 w-4" /> Create Product</Button>
+              <Badge variant="blue">{formatNumber(totals.orders)} product orders</Badge>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -192,15 +185,23 @@ export default function ProductsPage() {
                           <span className="text-muted-foreground text-xs">{product.description || 'No description'}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{product.dataLimitGb || 0} GB · {product.durationDays || 0} days</TableCell>
+                      <TableCell>
+                        {product.dataLimitGb || 0} GB · {product.durationDays || 0} days
+                      </TableCell>
                       <TableCell>{formatMoney(product.price, product.currency)}</TableCell>
                       <TableCell>{formatNumber(product.soldCount)}</TableCell>
                       <TableCell>{formatMoney(revenue, product.currency)}</TableCell>
-                      <TableCell><Badge variant={product.isActive ? 'green' : 'red'}>{product.isActive ? 'Active' : 'Disabled'}</Badge></TableCell>
+                      <TableCell>
+                        <Badge variant={product.isActive ? 'green' : 'red'}>{product.isActive ? 'Active' : 'Disabled'}</Badge>
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="outline" size="icon" onClick={() => handleEdit(product)}><Edit3 className="h-4 w-4" /></Button>
-                          <Button variant="destructive" size="icon" onClick={() => handleDelete(product)}><Trash2 className="h-4 w-4" /></Button>
+                          <Button variant="outline" size="icon" onClick={() => handleEdit(product)}>
+                            <Edit3 className="h-4 w-4" />
+                          </Button>
+                          <Button variant="destructive" size="icon" onClick={() => handleDelete(product)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -259,8 +260,12 @@ export default function ProductsPage() {
               <input type="checkbox" checked={form.isActive} onChange={event => setForm(prev => ({ ...prev, isActive: event.target.checked }))} /> Active product
             </label>
             <div className="flex justify-end gap-2 sm:col-span-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={saveProduct.isPending}>{saveProduct.isPending ? 'Saving...' : 'Save Product'}</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={saveProduct.isPending}>
+                {saveProduct.isPending ? 'Saving...' : 'Save Product'}
+              </Button>
             </div>
           </form>
         </DialogContent>

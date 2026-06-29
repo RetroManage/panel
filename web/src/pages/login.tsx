@@ -1,16 +1,17 @@
 import { Footer } from '@/components/layout/footer'
+import { Language } from '@/components/common/language'
 import { ThemeToggle } from '@/components/common/theme-toggle'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
 import { loginAdmin } from '@/service/api'
-import { setAuthToken } from '@/utils/authStorage'
-import { CircleAlertIcon, LogInIcon, ShieldCheck } from 'lucide-react'
+import { removeAuthToken, setAuthToken } from '@/utils/authStorage'
+import { CircleAlertIcon, LogInIcon } from 'lucide-react'
 import { FormEvent, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
+
+const logoSrc = '/statics/favicon/logo.png'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -20,7 +21,7 @@ export default function Login() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    setAuthToken('')
+    removeAuthToken()
   }, [])
 
   const submit = async (event: FormEvent) => {
@@ -39,51 +40,47 @@ export default function Login() {
   }
 
   return (
-    <div className="bg-background relative flex min-h-screen flex-col overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_35%),radial-gradient(circle_at_bottom_right,hsl(var(--primary)/0.12),transparent_35%)]" />
-      <div className="relative z-10 flex flex-1 items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary text-primary-foreground flex size-10 items-center justify-center rounded-xl shadow">
-                <ShieldCheck className="size-5" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold">RetroPanel</h1>
-                <p className="text-muted-foreground text-sm">Accounting control center</p>
-              </div>
+    <div className="flex min-h-screen w-full flex-col justify-between overflow-hidden bg-background p-6">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,hsl(var(--primary)/0.10),transparent_32%),radial-gradient(circle_at_bottom_right,hsl(var(--primary)/0.08),transparent_34%)]" />
+      <div className="relative z-10 w-full">
+        <div className="flex w-full items-center justify-between">
+          <Language />
+          <ThemeToggle />
+        </div>
+        <div className="flex w-full items-center justify-center">
+          <div className="mt-6 w-full max-w-[340px]">
+            <div className="flex flex-col items-center gap-2">
+              <img src={logoSrc} alt="RetroPanel Logo" className="h-20 w-20 rounded-3xl object-contain shadow-xl shadow-primary/10" />
+              <span className="text-2xl font-semibold">Login to RetroPanel</span>
+              <span className="text-center text-gray-600 dark:text-gray-400">Welcome back. Use your administrator credentials to continue.</span>
             </div>
-            <ThemeToggle />
-          </div>
 
-          <Card className="border-border/70 bg-card/95 shadow-2xl backdrop-blur">
-            <CardHeader>
-              <CardTitle>Login</CardTitle>
-              <CardDescription>Use your administrator credentials to access the accounting panel.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-4" onSubmit={submit}>
-                {error && (
-                  <Alert variant="destructive">
-                    <CircleAlertIcon className="size-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input id="username" autoComplete="username" value={username} onChange={event => setUsername(event.target.value)} placeholder="admin" />
+            <div className="mx-auto w-full max-w-[300px] pt-4">
+              <form onSubmit={submit} autoComplete="on" className="rounded-[1.75rem] border border-border/70 bg-card/65 p-4 shadow-2xl shadow-primary/5 backdrop-blur-xl">
+                <div className="flex flex-col gap-y-2">
+                  <Input className="rounded-xl py-5" placeholder="Username" autoComplete="username" value={username} onChange={event => setUsername(event.target.value)} />
+                  <PasswordInput
+                    className="rounded-xl py-5"
+                    placeholder="Password"
+                    allowBrowserSave
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={event => setPassword(event.target.value)}
+                  />
+                  {error && (
+                    <Alert className="mt-2 rounded-2xl" variant="destructive">
+                      <CircleAlertIcon size="18px" />
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+                  <Button type="submit" className="mt-2 flex w-full items-center gap-2 rounded-xl" disabled={loading}>
+                    <LogInIcon size="18px" />
+                    <span>{loading ? 'Signing in...' : 'Login'}</span>
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <PasswordInput id="password" autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} placeholder="••••••••" />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  <LogInIcon className="mr-2 size-4" />
-                  {loading ? 'Signing in...' : 'Sign in'}
-                </Button>
               </form>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
       <Footer />

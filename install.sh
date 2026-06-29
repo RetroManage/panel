@@ -43,8 +43,8 @@ if ! command -v node >/dev/null 2>&1 || ! node -v | grep -Eq '^v(20|21|22|23|24)
   apt-get install -y nodejs
 fi
 
-if ! command -v go >/dev/null 2>&1 || ! go version | grep -Eq 'go1\.(22|23|24|25)'; then
-  GO_VERSION="1.23.2"
+if ! command -v go >/dev/null 2>&1 || ! go version | grep -Eq 'go1\.26'; then
+  GO_VERSION="1.26.0"
   ARCH="amd64"
   if [[ "$(uname -m)" == "aarch64" || "$(uname -m)" == "arm64" ]]; then
     ARCH="arm64"
